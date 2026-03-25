@@ -28,12 +28,4 @@ export default async function LoginPage({
       </form>
     </div>
   );
-}          <input id="password-signup" name="password" type="password" required />
-        </div>
-        <button className="button secondary" type="submit">
-          Create account
-        </button>
-      </form>
-    </div>
-  );
 }
