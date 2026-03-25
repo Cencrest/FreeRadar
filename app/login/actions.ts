@@ -23,3 +23,9 @@ export async function signInWithGoogle() {
 
   redirect("/login?error=Could not start Google sign-in");
 }
+
+export async function signOutAction() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/login");
+}
