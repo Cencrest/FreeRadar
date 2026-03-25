@@ -9,14 +9,16 @@ export default async function HomePage() {
 
   return (
     <div className="stack">
-      <section className="hero">
-        <div className="card hero-card">
+      {/* HERO */}
+      <section className="hero-shell">
+        <div className="card hero-card hero-main-card">
           <span className="badge">MVP built for launch</span>
           <h1>Find free stuff near you before everyone else.</h1>
           <p>
             FreeRadar lets users search local free listings, save favorites, submit finds,
             and create email alerts by keyword and ZIP code.
           </p>
+
           <div className="split-actions">
             <Link href="/listings" className="button">
               Browse listings
@@ -27,30 +29,37 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="grid-3">
-          <div className="card metric">
-            <h3>Fast</h3>
-            <p>Search, favorite, and alert flow already wired.</p>
+        <div className="hero-feature-grid">
+          <div className="card hero-feature-card">
+            <h3 className="hero-feature-title">Fast search</h3>
+            <p className="hero-feature-copy">
+              Search free listings by keyword, ZIP code, and category in seconds.
+            </p>
           </div>
-          <div className="card metric">
-            <h3>Safe</h3>
-            <p>No Stripe. Billing can be added later behind a clean feature flag.</p>
+
+          <div className="card hero-feature-card">
+            <h3 className="hero-feature-title">Community-powered</h3>
+            <p className="hero-feature-copy">
+              Users can submit free finds to help more people discover useful items nearby.
+            </p>
           </div>
-          <div className="card metric">
-            <h3>Deployable</h3>
-            <p>Next.js + Supabase + Resend + Vercel ready.</p>
+
+          <div className="card hero-feature-card">
+            <h3 className="hero-feature-title">Built to grow</h3>
+            <p className="hero-feature-copy">
+              Alerts, favorites, and admin tools are already structured for expansion.
+            </p>
           </div>
         </div>
       </section>
 
+      {/* SEARCH */}
       <SearchForm />
 
+      {/* LISTINGS */}
       <section>
-        <SectionTitle
-          title="Recent free listings"
-          subtitle="The seed data below is demo content. You can replace it with manual imports, submissions, or future source adapters."
-        />
-        <div className="listings-grid">
+        <SectionTitle title="Recent free listings" />
+        <div className="grid">
           {listings.map((listing) => (
             <ListingCard key={listing.id} listing={listing} />
           ))}
