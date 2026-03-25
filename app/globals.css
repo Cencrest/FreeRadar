@@ -516,3 +516,7 @@ code.inline {
     max-width: none;
   }
 }
+.google-button {
+  width: 100%;
+  min-height: 48px;
+}
