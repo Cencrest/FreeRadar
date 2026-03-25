@@ -28,13 +28,7 @@ export default async function LoginPage({
       </form>
     </div>
   );
-}        <div className="field">
-          <label htmlFor="email-signup">Email</label>
-          <input id="email-signup" name="email" type="email" required />
-        </div>
-        <div className="field">
-          <label htmlFor="password-signup">Password</label>
-          <input id="password-signup" name="password" type="password" required />
+}          <input id="password-signup" name="password" type="password" required />
         </div>
         <button className="button secondary" type="submit">
           Create account
