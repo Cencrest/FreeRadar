@@ -3,7 +3,6 @@ import {
   createAlertAction,
   deleteAlertAction,
   deleteFavoriteAction,
-  deleteSubmissionAction,
 } from "./actions";
 import { getCurrentProfile, requireUser } from "@/lib/auth";
 import { getDashboardData } from "@/lib/data";
@@ -31,7 +30,7 @@ export default async function DashboardPage(props: any) {
         <div>
           <h1 className="page-title">Dashboard</h1>
           <p className="page-subtitle">
-            Manage alerts, favorites, your listings, and user submissions.
+            Manage alerts, favorites, and your listings.
           </p>
         </div>
 
@@ -58,42 +57,36 @@ export default async function DashboardPage(props: any) {
         <div className="notice">{searchParams.error}</div>
       ) : null}
 
+      {/* CREATE ALERT */}
       <section className="card panel">
         <h3>Create alert</h3>
         <p className="muted">
-          Alerts are matched in the scheduled alert job and sent by email.
+          Get notified when new listings match your search.
         </p>
 
         <form action={createAlertAction} className="search-form">
           <div className="field">
-            <label htmlFor="keyword">Keyword</label>
-            <input id="keyword" name="keyword" type="text" required />
+            <label>Keyword</label>
+            <input name="keyword" required />
           </div>
 
           <div className="field">
-            <label htmlFor="zip">ZIP code</label>
-            <input id="zip" name="zip" type="text" />
+            <label>ZIP</label>
+            <input name="zip" />
           </div>
 
           <div className="field">
-            <label htmlFor="radius_miles">Radius miles</label>
-            <input
-              id="radius_miles"
-              name="radius_miles"
-              type="number"
-              min="1"
-              defaultValue="10"
-              required
-            />
+            <label>Radius (miles)</label>
+            <input name="radius_miles" type="number" defaultValue="10" />
           </div>
 
           <div className="field">
-            <label htmlFor="category">Category</label>
-            <select id="category" name="category" defaultValue="all">
+            <label>Category</label>
+            <select name="category">
               <option value="all">All</option>
               <option value="furniture">Furniture</option>
-              <option value="appliances">Appliances</option>
               <option value="electronics">Electronics</option>
+              <option value="appliances">Appliances</option>
               <option value="home">Home</option>
               <option value="baby">Baby</option>
               <option value="tools">Tools</option>
@@ -103,13 +96,12 @@ export default async function DashboardPage(props: any) {
           </div>
 
           <div className="action-field">
-            <button className="button" type="submit">
-              Save alert
-            </button>
+            <button className="button">Create</button>
           </div>
         </form>
       </section>
 
+      {/* MY LISTINGS */}
       <section>
         <div className="section-title">
           <h2>My Listings</h2>
@@ -123,9 +115,7 @@ export default async function DashboardPage(props: any) {
                   <div>
                     <strong>{listing.title}</strong>
                     <div className="muted">
-                      {[listing.city, listing.state, listing.zip]
-                        .filter(Boolean)
-                        .join(", ") || "No location"}
+                      {[listing.city, listing.state].filter(Boolean).join(", ") || "No location"}
                     </div>
                   </div>
 
@@ -134,19 +124,12 @@ export default async function DashboardPage(props: any) {
                   </span>
                 </div>
 
-                {listing.description ? (
-                  <div className="muted">{listing.description}</div>
-                ) : null}
-
                 <div className="muted">
                   Created {formatDate(listing.created_at)}
                 </div>
 
                 <div className="split-actions">
-                  <Link
-                    href={`/listings/${listing.id}`}
-                    className="button small secondary"
-                  >
+                  <Link href={`/listings/${listing.id}`} className="button small secondary">
                     View listing
                   </Link>
 
@@ -169,11 +152,11 @@ export default async function DashboardPage(props: any) {
         </div>
       </section>
 
+      {/* ALERTS */}
       <section>
         <div className="section-title">
-          <h2>Your alerts</h2>
+          <h2>Your Alerts</h2>
         </div>
-        <p className="muted">{data.alerts.length} active alert(s)</p>
 
         <div className="table-list">
           {data.alerts.length ? (
@@ -183,112 +166,59 @@ export default async function DashboardPage(props: any) {
                   <div>
                     <strong>{alert.keyword}</strong>
                     <div className="muted">
-                      {alert.category || "all"} • {alert.zip || "any ZIP"} •{" "}
-                      {alert.radius_miles} miles
+                      {alert.category} · {alert.zip || "anywhere"}
                     </div>
                   </div>
 
                   <form action={deleteAlertAction}>
                     <input type="hidden" name="id" value={alert.id} />
-                    <button className="button small danger" type="submit">
-                      Delete
-                    </button>
+                    <button className="button small danger">Delete</button>
                   </form>
                 </div>
               </div>
             ))
           ) : (
-            <div className="empty">No alerts yet.</div>
+            <div className="empty">No alerts yet</div>
           )}
         </div>
       </section>
 
+      {/* FAVORITES */}
       <section>
         <div className="section-title">
           <h2>Favorites</h2>
         </div>
-        <p className="muted">Saved listings for quick access.</p>
 
         <div className="table-list">
           {data.favoriteListings.length ? (
-            data.favoriteListings.map((favorite: any) => (
-              <div key={favorite.id} className="table-item">
+            data.favoriteListings.map((fav: any) => (
+              <div key={fav.id} className="table-item">
                 <div className="spread">
                   <div>
-                    <strong>{favorite.listings?.title}</strong>
+                    <strong>{fav.listings?.title}</strong>
                     <div className="muted">
-                      {favorite.listings?.city || "Unknown city"}
+                      {fav.listings?.city}
                     </div>
                   </div>
 
                   <div className="inline-form">
                     <Link
-                      href={`/listings/${favorite.listing_id}`}
+                      href={`/listings/${fav.listing_id}`}
                       className="button small secondary"
                     >
-                      Open
+                      View
                     </Link>
 
                     <form action={deleteFavoriteAction}>
-                      <input type="hidden" name="id" value={favorite.id} />
-                      <button className="button small danger" type="submit">
-                        Remove
-                      </button>
+                      <input type="hidden" name="id" value={fav.id} />
+                      <button className="button small danger">Remove</button>
                     </form>
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="empty">
-              No favorites yet.{" "}
-              <Link href="/listings" className="button small secondary">
-                Browse listings
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section>
-        <div className="section-title">
-          <h2>Your submissions</h2>
-        </div>
-        <p className="muted">
-          Pending, approved, or rejected community finds.
-        </p>
-
-        <div className="table-list">
-          {data.submissions.length ? (
-            data.submissions.map((submission: any) => (
-              <div key={submission.id} className="table-item">
-                <div className="spread">
-                  <div>
-                    <strong>{submission.title}</strong>
-                    <div className="muted">
-                      {submission.status} • submitted{" "}
-                      {formatDate(submission.created_at)}
-                    </div>
-                  </div>
-
-                  {submission.status === "pending" ? (
-                    <form action={deleteSubmissionAction}>
-                      <input type="hidden" name="id" value={submission.id} />
-                      <button className="button small danger" type="submit">
-                        Delete
-                      </button>
-                    </form>
-                  ) : null}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="empty">
-              No submissions yet.{" "}
-              <Link href="/submit" className="button small secondary">
-                Submit your first one
-              </Link>
-            </div>
+            <div className="empty">No favorites yet</div>
           )}
         </div>
       </section>
