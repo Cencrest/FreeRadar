@@ -15,19 +15,22 @@ export async function createSubmissionAction(formData: FormData) {
     category: formData.get("category"),
     city: formData.get("city"),
     state: formData.get("state"),
-    zip: formData.get("zip")
+    zip: formData.get("zip"),
   });
 
   const supabase = await createClient();
 
-  const { error } = await supabase.from("submissions").insert({
+  const { error } = await supabase.from("listings").insert({
     user_id: user.id,
-    ...values
+    ...values,
+    approved: true,
+    status: "active",
+    is_demo: false,
   });
 
   if (error) {
     redirect(`/submit?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/dashboard?message=Submission created");
+  redirect("/dashboard?message=Listing created");
 }
