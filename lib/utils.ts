@@ -1,29 +1,24 @@
-export function classNames(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
-}
+export function formatDate(value: string | number | Date) {
+  const date = new Date(value);
 
-export function formatLocation(city?: string | null, state?: string | null, zip?: string | null) {
-  return [city, state, zip].filter(Boolean).join(", ");
-}
-
-export function formatDate(input: string) {
-  const date = new Date(input);
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short"
-  }).format(date);
-}
-
-export function buildSearchParams(params: Record<string, string | undefined>) {
-  const search = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value) search.set(key, value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
   }
-  return search.toString();
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
+
 export function getListingAgeBadge(createdAt: string) {
   const created = new Date(createdAt);
   const now = new Date();
+
+  if (Number.isNaN(created.getTime())) {
+    return "";
+  }
 
   const diffMs = now.getTime() - created.getTime();
   const diffHours = diffMs / (1000 * 60 * 60);
