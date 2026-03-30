@@ -21,7 +21,6 @@ export async function createSubmissionAction(formData: FormData) {
   const supabase = await createClient();
 
 const { error } = await supabase.from("listings").insert({
-  user_id: user.id,
   ...values,
   is_active: true,
 });
