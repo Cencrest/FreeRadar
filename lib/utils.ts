@@ -21,3 +21,17 @@ export function buildSearchParams(params: Record<string, string | undefined>) {
   }
   return search.toString();
 }
+export function getListingAgeBadge(createdAt: string) {
+  const created = new Date(createdAt);
+  const now = new Date();
+
+  const diffMs = now.getTime() - created.getTime();
+  const diffHours = diffMs / (1000 * 60 * 60);
+
+  if (diffHours < 24) {
+    return "New";
+  }
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `Day ${diffDays}`;
+}
