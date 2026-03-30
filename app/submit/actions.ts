@@ -21,10 +21,14 @@ export async function createSubmissionAction(formData: FormData) {
 
   const supabase = await createClient();
 
+  const activeUntil = new Date();
+  activeUntil.setDate(activeUntil.getDate() + 7);
+
   const { error } = await supabase.from("listings").insert({
     user_id: user.id,
     ...values,
     is_active: true,
+    active_until: activeUntil.toISOString(),
   });
 
   if (error) {
