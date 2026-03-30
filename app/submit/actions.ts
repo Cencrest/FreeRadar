@@ -20,13 +20,11 @@ export async function createSubmissionAction(formData: FormData) {
 
   const supabase = await createClient();
 
-  const { error } = await supabase.from("listings").insert({
-    user_id: user.id,
-    ...values,
-    approved: true,
-    status: "active",
-    is_demo: false,
-  });
+const { error } = await supabase.from("listings").insert({
+  user_id: user.id,
+  ...values,
+  is_active: true,
+});
 
   if (error) {
     redirect(`/submit?error=${encodeURIComponent(error.message)}`);
