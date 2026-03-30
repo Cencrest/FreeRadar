@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { submissionSchema } from "@/lib/validators";
 
 export async function createSubmissionAction(formData: FormData) {
-  const user = await requireUser();
+  await requireUser();
+
   const values = submissionSchema.parse({
     title: formData.get("title"),
     description: formData.get("description"),
@@ -20,10 +21,10 @@ export async function createSubmissionAction(formData: FormData) {
 
   const supabase = await createClient();
 
-const { error } = await supabase.from("listings").insert({
-  ...values,
-  is_active: true,
-});
+  const { error } = await supabase.from("listings").insert({
+    ...values,
+    is_active: true,
+  });
 
   if (error) {
     redirect(`/submit?error=${encodeURIComponent(error.message)}`);
