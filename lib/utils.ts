@@ -12,6 +12,14 @@ export function formatDate(value: string | number | Date) {
   });
 }
 
+export function formatLocation(
+  city?: string | null,
+  state?: string | null,
+  zip?: string | null
+) {
+  return [city, state, zip].filter(Boolean).join(", ");
+}
+
 export function getListingAgeBadge(createdAt: string) {
   const created = new Date(createdAt);
   const now = new Date();
