@@ -87,11 +87,7 @@ export default async function DashboardPage() {
                     alt={listing.title}
                     className="listing-card-image"
                   />
-                ) : (
-                  <div className="listing-card-image placeholder-image">
-                    No image
-                  </div>
-                )}
+                ) : null}
 
                 <div className="listing-card-body">
                   <div className="listing-card-meta">
