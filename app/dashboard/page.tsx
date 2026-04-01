@@ -1,12 +1,20 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { deleteListingAction } from "@/app/submit/actions";
+import { formatDate, formatLocation, getListingAgeBadge } from "@/lib/utils";
 
 type Listing = {
   id: string;
   title: string;
   description: string | null;
-  created_at: string;
+  image_url: string | null;
+  category: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  created_at: string | null;
+  is_active: boolean | null;
 };
 
 export default async function DashboardPage() {
@@ -15,7 +23,9 @@ export default async function DashboardPage() {
 
   const { data, error } = await supabase
     .from("listings")
-    .select("id, title, description, created_at")
+    .select(
+      "id, title, description, image_url, category, city, state, zip, created_at, is_active"
+    )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -26,38 +36,135 @@ export default async function DashboardPage() {
   const listings = (data ?? []) as Listing[];
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <h1 className="mb-6 text-2xl font-bold">My Listings</h1>
+    <div className="stack">
+      <div className="hero-card">
+        <div className="hero-copy">
+          <span className="eyebrow">Dashboard</span>
+          <h1 className="page-title">My Listings</h1>
+          <p className="page-subtitle">
+            Manage the items you posted to FreeRadar.
+          </p>
+        </div>
+
+        <div className="split-actions">
+          <Link href="/submit" className="button">
+            New listing
+          </Link>
+          <Link href="/listings" className="button secondary">
+            Browse listings
+          </Link>
+        </div>
+      </div>
 
       {listings.length === 0 ? (
-        <p>No listings yet.</p>
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>No listings yet</h3>
+          <p className="muted" style={{ marginBottom: 16 }}>
+            Post your first free item and it will show up here.
+          </p>
+          <Link href="/submit" className="button">
+            Create listing
+          </Link>
+        </div>
       ) : (
-        <div className="space-y-4">
-          {listings.map((listing) => (
-            <div key={listing.id} className="rounded-lg border p-4 shadow-sm">
-              <h2 className="text-lg font-semibold">{listing.title}</h2>
+        <div className="listing-grid">
+          {listings.map((listing) => {
+            const location = formatLocation(
+              listing.city,
+              listing.state,
+              listing.zip
+            );
 
-              {listing.description ? (
-                <p className="mt-2 text-sm text-gray-600">
-                  {listing.description}
-                </p>
-              ) : null}
+            const ageBadge = listing.created_at
+              ? getListingAgeBadge(listing.created_at)
+              : "";
 
-              <div className="mt-4 flex gap-3">
-                <form action={deleteListingAction}>
-                  <input type="hidden" name="listingId" value={listing.id} />
-                  <button
-                    type="submit"
-                    className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
-                </form>
-              </div>
-            </div>
-          ))}
+            return (
+              <article key={listing.id} className="card listing-card">
+                {listing.image_url ? (
+                  <img
+                    src={listing.image_url}
+                    alt={listing.title}
+                    className="listing-card-image"
+                  />
+                ) : (
+                  <div className="listing-card-image placeholder-image">
+                    No image
+                  </div>
+                )}
+
+                <div className="listing-card-body">
+                  <div className="listing-card-meta">
+                    {listing.category ? (
+                      <span className="badge">{listing.category}</span>
+                    ) : null}
+
+                    {ageBadge ? (
+                      <span
+                        className={
+                          ageBadge === "New"
+                            ? "badge badge-new"
+                            : "badge badge-age"
+                        }
+                      >
+                        {ageBadge}
+                      </span>
+                    ) : null}
+
+                    {listing.is_active === false ? (
+                      <span className="badge badge-age">Inactive</span>
+                    ) : null}
+                  </div>
+
+                  <h2 className="listing-card-title">{listing.title}</h2>
+
+                  <p className="listing-card-description">
+                    {listing.description || "No description provided."}
+                  </p>
+
+                  <div className="listing-card-footer">
+                    <div className="muted">
+                      {location || "Location not provided"}
+                    </div>
+                    <div className="muted">
+                      {listing.created_at
+                        ? `Posted ${formatDate(listing.created_at)}`
+                        : "Posted date unknown"}
+                    </div>
+                  </div>
+
+                  <div className="split-actions" style={{ marginTop: 16 }}>
+                    <Link
+                      href={`/listings/${listing.id}`}
+                      className="button secondary small"
+                    >
+                      View
+                    </Link>
+
+                    <Link
+                      href={`/submit?edit=${listing.id}`}
+                      className="button secondary small"
+                    >
+                      Edit
+                    </Link>
+
+                    <form action={deleteListingAction}>
+                      <input
+                        type="hidden"
+                        name="listingId"
+                        value={listing.id}
+                      />
+                      <button type="submit" className="button danger small">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
-    </main>
+    </div>
   );
 }
