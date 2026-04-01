@@ -67,7 +67,14 @@ export default async function DashboardPage() {
           </Link>
         </div>
       ) : (
-        <div className="listing-grid">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "16px",
+            alignItems: "start",
+          }}
+        >
           {listings.map((listing) => {
             const location = formatLocation(
               listing.city,
@@ -80,17 +87,43 @@ export default async function DashboardPage() {
               : "";
 
             return (
-              <article key={listing.id} className="card listing-card">
+              <article
+                key={listing.id}
+                className="card"
+                style={{
+                  padding: "0",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  minHeight: "320px",
+                }}
+              >
                 {listing.image_url ? (
                   <img
                     src={listing.image_url}
                     alt={listing.title}
-                    className="listing-card-image"
+                    style={{
+                      width: "100%",
+                      height: "160px",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
                   />
                 ) : null}
 
-                <div className="listing-card-body">
-                  <div className="listing-card-meta">
+                <div
+                  style={{
+                    padding: "16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                    flex: 1,
+                  }}
+                >
+                  <div
+                    className="listing-card-meta"
+                    style={{ marginBottom: 0, gap: "8px", flexWrap: "wrap" }}
+                  >
                     {listing.category ? (
                       <span className="badge">{listing.category}</span>
                     ) : null}
@@ -112,27 +145,65 @@ export default async function DashboardPage() {
                     ) : null}
                   </div>
 
-                  <h2 className="listing-card-title">{listing.title}</h2>
+                  <div>
+                    <h2
+                      style={{
+                        margin: 0,
+                        fontSize: "1.75rem",
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      {listing.title}
+                    </h2>
+                  </div>
 
-                  <p className="listing-card-description">
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "var(--muted-foreground, rgba(255,255,255,0.72))",
+                      fontSize: "1rem",
+                      lineHeight: 1.4,
+                    }}
+                  >
                     {listing.description || "No description provided."}
                   </p>
 
-                  <div className="listing-card-footer">
-                    <div className="muted">
+                  <div
+                    style={{
+                      marginTop: "auto",
+                      paddingTop: "12px",
+                      borderTop: "1px solid rgba(255,255,255,0.08)",
+                      display: "grid",
+                      gap: "6px",
+                    }}
+                  >
+                    <div className="muted" style={{ fontSize: "0.95rem" }}>
                       {location || "Location not provided"}
                     </div>
-                    <div className="muted">
+
+                    <div className="muted" style={{ fontSize: "0.95rem" }}>
                       {listing.created_at
                         ? `Posted ${formatDate(listing.created_at)}`
                         : "Posted date unknown"}
                     </div>
                   </div>
 
-                  <div className="split-actions" style={{ marginTop: 16 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                      marginTop: "4px",
+                    }}
+                  >
                     <Link
                       href={`/listings/${listing.id}`}
                       className="button secondary small"
+                      style={{
+                        padding: "10px 14px",
+                        fontSize: "0.95rem",
+                        lineHeight: 1,
+                      }}
                     >
                       View
                     </Link>
@@ -140,17 +211,30 @@ export default async function DashboardPage() {
                     <Link
                       href={`/submit?edit=${listing.id}`}
                       className="button secondary small"
+                      style={{
+                        padding: "10px 14px",
+                        fontSize: "0.95rem",
+                        lineHeight: 1,
+                      }}
                     >
                       Edit
                     </Link>
 
-                    <form action={deleteListingAction}>
+                    <form action={deleteListingAction} style={{ margin: 0 }}>
                       <input
                         type="hidden"
                         name="listingId"
                         value={listing.id}
                       />
-                      <button type="submit" className="button danger small">
+                      <button
+                        type="submit"
+                        className="button danger small"
+                        style={{
+                          padding: "10px 14px",
+                          fontSize: "0.95rem",
+                          lineHeight: 1,
+                        }}
+                      >
                         Delete
                       </button>
                     </form>
