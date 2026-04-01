@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { submissionSchema } from "@/lib/validators";
@@ -32,8 +33,32 @@ export async function createSubmissionAction(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/submit?error=${encodeURIComponent(error.message)}`);
+    throw new Error(error.message);
   }
 
-  redirect("/dashboard?message=Listing created");
+  revalidatePath("/dashboard");
+  redirect("/dashboard");
+}
+
+export async function deleteListingAction(formData: FormData) {
+  const user = await requireUser();
+  const supabase = await createClient();
+
+  const listingId = formData.get("listingId");
+
+  if (!listingId || typeof listingId !== "string") {
+    throw new Error("Missing listingId");
+  }
+
+  const { error } = await supabase
+    .from("listings")
+    .delete()
+    .eq("id", listingId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/dashboard");
 }
