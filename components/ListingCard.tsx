@@ -25,12 +25,22 @@ export function ListingCard({ listing }: ListingCardProps) {
     !listing.source_url.includes("free-radar.vercel.app") &&
     !listing.source_url.startsWith("/listings/");
 
+  const hasImage = !!listing.image_url;
+
   return (
-    <div className="card listing-card">
-      {listing.image_url ? (
+    <div
+      className="card listing-card"
+      style={{
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}
+    >
+      {hasImage ? (
         <Link href={`/listings/${listing.id}`}>
           <ListingImage
-            src={listing.image_url}
+            src={listing.image_url as string}
             alt={listing.title}
             style={{
               width: "100%",
@@ -45,33 +55,76 @@ export function ListingCard({ listing }: ListingCardProps) {
         </Link>
       ) : null}
 
-      <div className="listing-card-body">
-        <div className="listing-card-meta">
-          {listing.category ? <span className="badge">{listing.category}</span> : null}
+      <div
+        className="listing-card-body"
+        style={{
+          padding: hasImage ? undefined : "18px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+          flex: 1,
+        }}
+      >
+        <div
+          className="listing-card-meta"
+          style={{
+            marginBottom: 0,
+            gap: "8px",
+            flexWrap: "wrap",
+          }}
+        >
+          {listing.category ? (
+            <span className="badge">{listing.category}</span>
+          ) : null}
 
-          <span className={ageBadge === "New" ? "badge badge-new" : "badge badge-age"}>
+          <span
+            className={ageBadge === "New" ? "badge badge-new" : "badge badge-age"}
+          >
             {ageBadge}
           </span>
 
           {(listing.city || listing.state) && (
-            <span>
-              {[listing.city, listing.state].filter(Boolean).join(", ")}
-            </span>
+            <span>{[listing.city, listing.state].filter(Boolean).join(", ")}</span>
           )}
         </div>
 
-        <h3 className="listing-title">
+        <h3
+          className="listing-title"
+          style={{
+            margin: 0,
+            lineHeight: 1.15,
+          }}
+        >
           <Link href={`/listings/${listing.id}`}>{listing.title}</Link>
         </h3>
 
         {listing.description ? (
-          <p className="description-clamp">{listing.description}</p>
+          <p
+            className="description-clamp"
+            style={{
+              margin: 0,
+            }}
+          >
+            {listing.description}
+          </p>
         ) : (
-          <p className="description-clamp muted">No description provided.</p>
+          <p
+            className="description-clamp muted"
+            style={{
+              margin: 0,
+            }}
+          >
+            No description provided.
+          </p>
         )}
       </div>
 
-      <div className="listing-card-footer">
+      <div
+        className="listing-card-footer"
+        style={{
+          marginTop: "auto",
+        }}
+      >
         <Link href={`/listings/${listing.id}`} className="button small">
           View listing
         </Link>
