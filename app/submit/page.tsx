@@ -1,89 +1,196 @@
-import { createSubmissionAction } from "./actions";
-import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import {
+  createSubmissionAction,
+  updateListingAction,
+} from "@/app/submit/actions";
 
-export default async function SubmitPage(props: any) {
-  const searchParams = (await props.searchParams) ?? {};
-  const user = await getCurrentUser();
+type SubmitPageProps = {
+  searchParams?: Promise<{
+    edit?: string;
+  }>;
+};
 
-  if (!user) {
-    return (
-      <div className="auth-card card stack">
-        <h1 className="page-title">Submit a free item</h1>
-        <p className="muted">You need an account to submit listings.</p>
-        <Link href="/login" className="button">
-          Log in
-        </Link>
-      </div>
-    );
+export default async function SubmitPage(props: SubmitPageProps) {
+  const user = await requireUser();
+  const supabase = await createClient();
+
+  const searchParams = await props.searchParams;
+  const editId = searchParams?.edit;
+
+  let listing: null | {
+    id: string;
+    title: string | null;
+    description: string | null;
+    image_url: string | null;
+    source_url: string | null;
+    category: string | null;
+    city: string | null;
+    state: string | null;
+    zip: string | null;
+  } = null;
+
+  if (editId) {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("id, title, description, image_url, source_url, category, city, state, zip")
+      .eq("id", editId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (error || !data) {
+      notFound();
+    }
+
+    listing = data;
   }
 
+  const isEditMode = !!listing;
+
   return (
-    <div className="submit-card card stack">
-      <div>
-        <h1 className="page-title">Submit a free item</h1>
-        <p className="page-subtitle">
-          This creates a pending item for review. Approved items can later be promoted into the public listings feed.
-        </p>
+    <div className="stack">
+      <div className="hero-card">
+        <div className="hero-copy">
+          <span className="eyebrow">{isEditMode ? "Edit Listing" : "New Listing"}</span>
+          <h1 className="page-title">
+            {isEditMode ? "Update Listing" : "Post a New Listing"}
+          </h1>
+          <p className="page-subtitle">
+            {isEditMode
+              ? "Make changes to your existing FreeRadar post."
+              : "Add a free item so people nearby can find it fast."}
+          </p>
+        </div>
+
+        <div className="split-actions">
+          <Link href="/dashboard" className="button secondary">
+            Back to dashboard
+          </Link>
+          <Link href="/listings" className="button secondary">
+            Browse listings
+          </Link>
+        </div>
       </div>
 
-      {searchParams.error ? <div className="empty">{searchParams.error}</div> : null}
+      <div className="card" style={{ maxWidth: 820 }}>
+        <form
+          action={isEditMode ? updateListingAction : createSubmissionAction}
+          className="stack"
+        >
+          {isEditMode ? (
+            <input type="hidden" name="listingId" value={listing.id} />
+          ) : null}
 
-      <form action={createSubmissionAction} className="stack">
-        <div className="field">
-          <label htmlFor="title">Title</label>
-          <input id="title" name="title" placeholder="Free couch in good condition" required />
-        </div>
-
-        <div className="field">
-          <label htmlFor="description">Description</label>
-          <textarea id="description" name="description" placeholder="Add pickup notes, condition, and timing." />
-        </div>
-
-        <div className="grid-2">
           <div className="field">
-            <label htmlFor="source_url">Original post URL</label>
-            <input id="source_url" name="source_url" placeholder="https://..." />
+            <label htmlFor="title">Title</label>
+            <input
+              id="title"
+              name="title"
+              type="text"
+              defaultValue={listing?.title ?? ""}
+              placeholder="Free couch, free bike, curb alert..."
+              required
+            />
           </div>
+
+          <div className="field">
+            <label htmlFor="description">Description</label>
+            <textarea
+              id="description"
+              name="description"
+              rows={5}
+              defaultValue={listing?.description ?? ""}
+              placeholder="Condition, pickup details, size, notes..."
+            />
+          </div>
+
           <div className="field">
             <label htmlFor="image_url">Image URL</label>
-            <input id="image_url" name="image_url" placeholder="https://..." />
+            <input
+              id="image_url"
+              name="image_url"
+              type="url"
+              defaultValue={listing?.image_url ?? ""}
+              placeholder="https://..."
+            />
           </div>
-        </div>
 
-        <div className="grid-3">
           <div className="field">
-            <label htmlFor="category">Category</label>
-            <select id="category" name="category" defaultValue="other">
-              <option value="furniture">Furniture</option>
-              <option value="appliances">Appliances</option>
-              <option value="electronics">Electronics</option>
-              <option value="home">Home</option>
-              <option value="baby">Baby</option>
-              <option value="tools">Tools</option>
-              <option value="outdoors">Outdoors</option>
-              <option value="other">Other</option>
-            </select>
+            <label htmlFor="source_url">Source URL</label>
+            <input
+              id="source_url"
+              name="source_url"
+              type="url"
+              defaultValue={listing?.source_url ?? ""}
+              placeholder="https://..."
+            />
           </div>
-          <div className="field">
-            <label htmlFor="city">City</label>
-            <input id="city" name="city" placeholder="Queens" />
-          </div>
-          <div className="field">
-            <label htmlFor="state">State</label>
-            <input id="state" name="state" placeholder="NY" />
-          </div>
-        </div>
 
-        <div className="field">
-          <label htmlFor="zip">ZIP code</label>
-          <input id="zip" name="zip" placeholder="11368" />
-        </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "14px",
+            }}
+          >
+            <div className="field">
+              <label htmlFor="category">Category</label>
+              <input
+                id="category"
+                name="category"
+                type="text"
+                defaultValue={listing?.category ?? ""}
+                placeholder="furniture, electronics, curb alert..."
+              />
+            </div>
 
-        <button type="submit" className="button">
-          Submit listing
-        </button>
-      </form>
+            <div className="field">
+              <label htmlFor="city">City</label>
+              <input
+                id="city"
+                name="city"
+                type="text"
+                defaultValue={listing?.city ?? ""}
+                placeholder="Brooklyn"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="state">State</label>
+              <input
+                id="state"
+                name="state"
+                type="text"
+                defaultValue={listing?.state ?? ""}
+                placeholder="NY"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="zip">ZIP</label>
+              <input
+                id="zip"
+                name="zip"
+                type="text"
+                defaultValue={listing?.zip ?? ""}
+                placeholder="11211"
+              />
+            </div>
+          </div>
+
+          <div className="split-actions" style={{ marginTop: 8 }}>
+            <button type="submit" className="button">
+              {isEditMode ? "Save changes" : "Create listing"}
+            </button>
+
+            <Link href="/dashboard" className="button secondary">
+              Cancel
+            </Link>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
