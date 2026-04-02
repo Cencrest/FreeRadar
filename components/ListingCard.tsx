@@ -1,3 +1,4 @@
+import ListingImage from "@/components/listing-image";
 import Link from "next/link";
 import { getListingAgeBadge } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ export function ListingCard({ listing }: ListingCardProps) {
     <div className="card listing-card">
       {listing.image_url ? (
         <Link href={`/listings/${listing.id}`}>
-          <img
+          <ListingImage
             src={listing.image_url}
             alt={listing.title}
             style={{
