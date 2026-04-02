@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import ListingImage from "@/components/listing-image";
 import { formatDate, formatLocation, getListingAgeBadge } from "@/lib/utils";
 
 export default async function ListingDetailPage(props: any) {
@@ -27,7 +28,11 @@ export default async function ListingDetailPage(props: any) {
     ? getListingAgeBadge(listing.created_at)
     : "";
 
-  const location = formatLocation(listing.city, listing.state, listing.zip);
+  const location = formatLocation(
+    listing.city,
+    listing.state,
+    listing.zip
+  );
 
   const isExternalSource =
     !!listing.source_url &&
@@ -43,9 +48,10 @@ export default async function ListingDetailPage(props: any) {
       </div>
 
       <div className="detail-layout">
+        {/* LEFT SIDE */}
         <div className="card detail-card">
           {listing.image_url ? (
-            <img
+            <ListingImage
               src={listing.image_url}
               alt={listing.title}
               style={{
@@ -67,7 +73,9 @@ export default async function ListingDetailPage(props: any) {
             {ageBadge ? (
               <span
                 className={
-                  ageBadge === "New" ? "badge badge-new" : "badge badge-age"
+                  ageBadge === "New"
+                    ? "badge badge-new"
+                    : "badge badge-age"
                 }
               >
                 {ageBadge}
@@ -96,7 +104,10 @@ export default async function ListingDetailPage(props: any) {
                 Original post
               </a>
             ) : (
-              <Link href={`/listings/${listing.id}`} className="button">
+              <Link
+                href={`/listings/${listing.id}`}
+                className="button"
+              >
                 View listing
               </Link>
             )}
@@ -107,36 +118,47 @@ export default async function ListingDetailPage(props: any) {
           </div>
         </div>
 
+        {/* RIGHT SIDE */}
         <div className="card detail-card">
           <h3 style={{ marginTop: 0 }}>Listing Details</h3>
 
           <div className="kv">
             <div>
               <span className="muted">Category</span>
-              <span>{listing.category || "Uncategorized"}</span>
+              <span>
+                {listing.category || "Uncategorized"}
+              </span>
             </div>
 
             <div>
               <span className="muted">Location</span>
-              <span>{location || "Not provided"}</span>
+              <span>
+                {location || "Not provided"}
+              </span>
             </div>
 
             <div>
               <span className="muted">Created</span>
               <span>
-                {listing.created_at ? formatDate(listing.created_at) : "Unknown"}
+                {listing.created_at
+                  ? formatDate(listing.created_at)
+                  : "Unknown"}
               </span>
             </div>
 
             <div>
               <span className="muted">Status</span>
-              <span>{listing.is_active ? "Active" : "Inactive"}</span>
+              <span>
+                {listing.is_active ? "Active" : "Inactive"}
+              </span>
             </div>
 
             {listing.active_until ? (
               <div>
                 <span className="muted">Active Until</span>
-                <span>{formatDate(listing.active_until)}</span>
+                <span>
+                  {formatDate(listing.active_until)}
+                </span>
               </div>
             ) : null}
           </div>
@@ -156,7 +178,9 @@ export default async function ListingDetailPage(props: any) {
                   .
                 </>
               ) : (
-                <>This listing was posted directly on FreeRadar.</>
+                <>
+                  This listing was posted directly on FreeRadar.
+                </>
               )}
             </div>
           ) : (
