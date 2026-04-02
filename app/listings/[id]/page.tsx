@@ -48,7 +48,6 @@ export default async function ListingDetailPage(props: any) {
       </div>
 
       <div className="detail-layout">
-        {/* LEFT SIDE */}
         <div className="card detail-card">
           {listing.image_url ? (
             <ListingImage
@@ -93,8 +92,8 @@ export default async function ListingDetailPage(props: any) {
             {listing.description || "No description provided."}
           </p>
 
-          <div className="split-actions">
-            {isExternalSource ? (
+          {isExternalSource ? (
+            <div className="split-actions">
               <a
                 href={listing.source_url}
                 target="_blank"
@@ -103,38 +102,22 @@ export default async function ListingDetailPage(props: any) {
               >
                 Original post
               </a>
-            ) : (
-              <Link
-                href={`/listings/${listing.id}`}
-                className="button"
-              >
-                View listing
-              </Link>
-            )}
-
-            <Link href="/dashboard" className="button secondary">
-              Dashboard
-            </Link>
-          </div>
+            </div>
+          ) : null}
         </div>
 
-        {/* RIGHT SIDE */}
         <div className="card detail-card">
           <h3 style={{ marginTop: 0 }}>Listing Details</h3>
 
           <div className="kv">
             <div>
               <span className="muted">Category</span>
-              <span>
-                {listing.category || "Uncategorized"}
-              </span>
+              <span>{listing.category || "Uncategorized"}</span>
             </div>
 
             <div>
               <span className="muted">Location</span>
-              <span>
-                {location || "Not provided"}
-              </span>
+              <span>{location || "Not provided"}</span>
             </div>
 
             <div>
@@ -148,17 +131,13 @@ export default async function ListingDetailPage(props: any) {
 
             <div>
               <span className="muted">Status</span>
-              <span>
-                {listing.is_active ? "Active" : "Inactive"}
-              </span>
+              <span>{listing.is_active ? "Active" : "Inactive"}</span>
             </div>
 
             {listing.active_until ? (
               <div>
                 <span className="muted">Active Until</span>
-                <span>
-                  {formatDate(listing.active_until)}
-                </span>
+                <span>{formatDate(listing.active_until)}</span>
               </div>
             ) : null}
           </div>
@@ -178,9 +157,7 @@ export default async function ListingDetailPage(props: any) {
                   .
                 </>
               ) : (
-                <>
-                  This listing was posted directly on FreeRadar.
-                </>
+                <>This listing was posted directly on FreeRadar.</>
               )}
             </div>
           ) : (
