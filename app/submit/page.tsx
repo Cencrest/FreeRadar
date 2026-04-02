@@ -54,7 +54,15 @@ export default async function SubmitPage(props: SubmitPageProps) {
   const isEditMode = !!listing;
 
   return (
-    <div className="stack">
+  <div
+    className="stack"
+    style={{
+      maxWidth: "900px",
+      margin: "0 auto",
+      width: "100%",
+      padding: "0 16px",
+    }}
+  >
       <div className="hero-card">
         <div className="hero-copy">
           <span className="eyebrow">
@@ -80,7 +88,14 @@ export default async function SubmitPage(props: SubmitPageProps) {
         </div>
       </div>
 
-      <div className="card" style={{ maxWidth: 820 }}>
+      <div
+  className="card"
+  style={{
+    maxWidth: "820px",
+    margin: "0 auto",
+    width: "100%",
+  }}
+>
         <form
           action={isEditMode ? updateListingAction : createSubmissionAction}
           className="stack"
