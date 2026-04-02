@@ -13,6 +13,18 @@ type SubmitPageProps = {
   }>;
 };
 
+type EditableListing = {
+  id: string;
+  title: string | null;
+  description: string | null;
+  image_url: string | null;
+  source_url: string | null;
+  category: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+};
+
 export default async function SubmitPage(props: SubmitPageProps) {
   const user = await requireUser();
   const supabase = await createClient();
@@ -20,22 +32,14 @@ export default async function SubmitPage(props: SubmitPageProps) {
   const searchParams = await props.searchParams;
   const editId = searchParams?.edit;
 
-  let listing: null | {
-    id: string;
-    title: string | null;
-    description: string | null;
-    image_url: string | null;
-    source_url: string | null;
-    category: string | null;
-    city: string | null;
-    state: string | null;
-    zip: string | null;
-  } = null;
+  let listing: EditableListing | null = null;
 
   if (editId) {
     const { data, error } = await supabase
       .from("listings")
-      .select("id, title, description, image_url, source_url, category, city, state, zip")
+      .select(
+        "id, title, description, image_url, source_url, category, city, state, zip"
+      )
       .eq("id", editId)
       .eq("user_id", user.id)
       .single();
@@ -44,7 +48,7 @@ export default async function SubmitPage(props: SubmitPageProps) {
       notFound();
     }
 
-    listing = data;
+    listing = data as EditableListing;
   }
 
   const isEditMode = !!listing;
@@ -53,7 +57,9 @@ export default async function SubmitPage(props: SubmitPageProps) {
     <div className="stack">
       <div className="hero-card">
         <div className="hero-copy">
-          <span className="eyebrow">{isEditMode ? "Edit Listing" : "New Listing"}</span>
+          <span className="eyebrow">
+            {isEditMode ? "Edit Listing" : "New Listing"}
+          </span>
           <h1 className="page-title">
             {isEditMode ? "Update Listing" : "Post a New Listing"}
           </h1>
@@ -79,7 +85,7 @@ export default async function SubmitPage(props: SubmitPageProps) {
           action={isEditMode ? updateListingAction : createSubmissionAction}
           className="stack"
         >
-          {isEditMode ? (
+          {isEditMode && listing ? (
             <input type="hidden" name="listingId" value={listing.id} />
           ) : null}
 
