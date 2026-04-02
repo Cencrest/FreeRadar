@@ -6,6 +6,7 @@ import {
   createSubmissionAction,
   updateListingAction,
 } from "@/app/submit/actions";
+import SourceUrlAutofill from "@/components/source-url-autofill";
 
 type SubmitPageProps = {
   searchParams?: Promise<{
@@ -54,15 +55,15 @@ export default async function SubmitPage(props: SubmitPageProps) {
   const isEditMode = !!listing;
 
   return (
-  <div
-    className="stack"
-    style={{
-      maxWidth: "900px",
-      margin: "0 auto",
-      width: "100%",
-      padding: "0 16px",
-    }}
-  >
+    <div
+      className="stack"
+      style={{
+        maxWidth: "900px",
+        margin: "0 auto",
+        width: "100%",
+        padding: "0 16px",
+      }}
+    >
       <div className="hero-card">
         <div className="hero-copy">
           <span className="eyebrow">
@@ -74,7 +75,7 @@ export default async function SubmitPage(props: SubmitPageProps) {
           <p className="page-subtitle">
             {isEditMode
               ? "Make changes to your existing FreeRadar post."
-              : "Add a free item so people nearby can find it fast."}
+              : "Paste a source link and FreeRadar will try to pull the title, image, and description automatically."}
           </p>
         </div>
 
@@ -89,13 +90,13 @@ export default async function SubmitPage(props: SubmitPageProps) {
       </div>
 
       <div
-  className="card"
-  style={{
-    maxWidth: "820px",
-    margin: "0 auto",
-    width: "100%",
-  }}
->
+        className="card"
+        style={{
+          maxWidth: "820px",
+          margin: "0 auto",
+          width: "100%",
+        }}
+      >
         <form
           action={isEditMode ? updateListingAction : createSubmissionAction}
           className="stack"
@@ -104,102 +105,12 @@ export default async function SubmitPage(props: SubmitPageProps) {
             <input type="hidden" name="listingId" value={listing.id} />
           ) : null}
 
-          <div className="field">
-            <label htmlFor="title">Title</label>
-            <input
-              id="title"
-              name="title"
-              type="text"
-              defaultValue={listing?.title ?? ""}
-              placeholder="Free couch, free bike, curb alert..."
-              required
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              name="description"
-              rows={5}
-              defaultValue={listing?.description ?? ""}
-              placeholder="Condition, pickup details, size, notes..."
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="image_url">Image URL</label>
-            <input
-              id="image_url"
-              name="image_url"
-              type="url"
-              defaultValue={listing?.image_url ?? ""}
-              placeholder="https://..."
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="source_url">Source URL</label>
-            <input
-              id="source_url"
-              name="source_url"
-              type="url"
-              defaultValue={listing?.source_url ?? ""}
-              placeholder="https://..."
-            />
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "14px",
-            }}
-          >
-            <div className="field">
-              <label htmlFor="category">Category</label>
-              <input
-                id="category"
-                name="category"
-                type="text"
-                defaultValue={listing?.category ?? ""}
-                placeholder="furniture, electronics, curb alert..."
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="city">City</label>
-              <input
-                id="city"
-                name="city"
-                type="text"
-                defaultValue={listing?.city ?? ""}
-                placeholder="Brooklyn"
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="state">State</label>
-              <input
-                id="state"
-                name="state"
-                type="text"
-                defaultValue={listing?.state ?? ""}
-                placeholder="NY"
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="zip">ZIP</label>
-              <input
-                id="zip"
-                name="zip"
-                type="text"
-                defaultValue={listing?.zip ?? ""}
-                placeholder="11211"
-              />
-            </div>
-          </div>
+          <SourceUrlAutofill
+            initialTitle={listing?.title ?? ""}
+            initialDescription={listing?.description ?? ""}
+            initialImageUrl={listing?.image_url ?? ""}
+            initialSourceUrl={listing?.source_url ?? ""}
+          />
 
           <div className="split-actions" style={{ marginTop: 8 }}>
             <button type="submit" className="button">
