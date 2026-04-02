@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { deleteListingAction } from "@/app/submit/actions";
+import ListingImage from "@/components/listing-image";
 import { formatDate, formatLocation, getListingAgeBadge } from "@/lib/utils";
 
 type Listing = {
@@ -99,7 +100,7 @@ export default async function DashboardPage() {
                 }}
               >
                 {listing.image_url ? (
-                  <img
+                  <ListingImage
                     src={listing.image_url}
                     alt={listing.title}
                     style={{
