@@ -5,7 +5,9 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import * as cheerio from "cheerio";
 
-const NYC_FREE_STUFF_URL = "https://newyork.craigslist.org/search/zip#search=2~gallery~6";
+const NYC_FREE_STUFF_URL =
+  "https://newyork.craigslist.org/search/zip#search=2~gallery~6";
+
 const MAX_RESULTS_TO_IMPORT = 24;
 
 type SearchResult = {
@@ -46,7 +48,10 @@ function inferCityState(locationText: string) {
     return { city: "", state: "NY" };
   }
 
-  const parts = cleaned.split(",").map((p) => p.trim()).filter(Boolean);
+  const parts = cleaned
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
 
   if (parts.length >= 2) {
     return {
@@ -65,7 +70,8 @@ async function fetchHtml(url: string) {
   const response = await fetch(url, {
     method: "GET",
     headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; FreeRadarBot/1.0; +https://free-radar.vercel.app)",
+      "User-Agent":
+        "Mozilla/5.0 (compatible; FreeRadarBot/1.0; +https://free-radar.vercel.app)",
     },
     cache: "no-store",
   });
@@ -84,7 +90,6 @@ async function extractSearchResults(searchUrl: string): Promise<SearchResult[]> 
   const results: SearchResult[] = [];
   const seen = new Set<string>();
 
-  // Craigslist result links usually point to individual post pages ending in .html
   $("a[href]").each((_, el) => {
     const href = $(el).attr("href") || "";
     const text = $(el).text().trim();
@@ -95,11 +100,10 @@ async function extractSearchResults(searchUrl: string): Promise<SearchResult[]> 
 
     if (!absolute.includes("craigslist.org")) return;
     if (!absolute.includes(".html")) return;
-
-    // skip duplicates and obvious non-post links
     if (seen.has(absolute)) return;
 
     seen.add(absolute);
+
     results.push({
       source_url: absolute,
       title: text,
@@ -109,7 +113,9 @@ async function extractSearchResults(searchUrl: string): Promise<SearchResult[]> 
   return results.slice(0, MAX_RESULTS_TO_IMPORT);
 }
 
-async function extractListingFromDetailPage(result: SearchResult): Promise<ImportedListing> {
+async function extractListingFromDetailPage(
+  result: SearchResult
+): Promise<ImportedListing> {
   const html = await fetchHtml(result.source_url);
   const $ = cheerio.load(html);
 
@@ -124,7 +130,10 @@ async function extractListingFromDetailPage(result: SearchResult): Promise<Impor
   const description = pickFirst(
     $('meta[property="og:description"]').attr("content"),
     $('meta[name="description"]').attr("content"),
-    $("#postingbody").text().replace("QR Code Link to This Post", "").trim()
+    $("#postingbody")
+      .text()
+      .replace("QR Code Link to This Post", "")
+      .trim()
   );
 
   const imageUrl = absoluteUrl(
@@ -177,9 +186,13 @@ export async function importCraigslistNycFreeStuffAction() {
     throw new Error(existingError.message);
   }
 
-  const existing = new Set((existingRows ?? []).map((row) => row.source_url));
+  const existing = new Set(
+    (existingRows ?? []).map((row) => row.source_url)
+  );
 
-  const newResults = searchResults.filter((r) => !existing.has(r.source_url));
+  const newResults = searchResults.filter(
+    (result) => !existing.has(result.source_url)
+  );
 
   const importedRows: Array<Record<string, unknown>> = [];
 
@@ -198,10 +211,16 @@ export async function importCraigslistNycFreeStuffAction() {
         state: extracted.state || "NY",
         zip: extracted.zip || null,
         is_active: true,
-        active_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        active_until: new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000
+        ).toISOString(),
       });
-    } catch (err) {
-      console.error("Failed to import Craigslist listing:", result.source_url, err);
+    } catch (error) {
+      console.error(
+        "Failed to import Craigslist listing:",
+        result.source_url,
+        error
+      );
     }
   }
 
