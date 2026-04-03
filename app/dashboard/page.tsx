@@ -2,7 +2,6 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { deleteListingAction } from "@/app/submit/actions";
-import { importCraigslistNycFreeStuffAction } from "@/app/dashboard/actions";
 import ListingImage from "@/components/listing-image";
 import { formatDate, formatLocation, getListingAgeBadge } from "@/lib/utils";
 
@@ -56,12 +55,6 @@ export default async function DashboardPage() {
           <Link href="/listings" className="button secondary">
             Browse listings
           </Link>
-
-          <form action={importCraigslistNycFreeStuffAction}>
-            <button type="submit" className="button secondary">
-              Import NYC Craigslist
-            </button>
-          </form>
         </div>
       </div>
 
@@ -71,17 +64,9 @@ export default async function DashboardPage() {
           <p className="muted" style={{ marginBottom: 16 }}>
             Post your first free item and it will show up here.
           </p>
-          <div className="split-actions">
-            <Link href="/submit" className="button">
-              Create listing
-            </Link>
-
-            <form action={importCraigslistNycFreeStuffAction}>
-              <button type="submit" className="button secondary">
-                Import NYC Craigslist
-              </button>
-            </form>
-          </div>
+          <Link href="/submit" className="button">
+            Create listing
+          </Link>
         </div>
       ) : (
         <div
