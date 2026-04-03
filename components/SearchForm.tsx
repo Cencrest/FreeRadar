@@ -1,25 +1,47 @@
 export function SearchForm({
   defaultQ = "",
-  defaultZip = "",
-  defaultCategory = ""
+  defaultCategory = "",
+  defaultBorough = ""
 }: {
   defaultQ?: string;
-  defaultZip?: string;
   defaultCategory?: string;
+  defaultBorough?: string;
 }) {
   return (
     <form action="/listings" method="get" className="search-form card">
       <div className="field">
         <label htmlFor="q">Keyword</label>
-        <input id="q" name="q" placeholder="couch, dresser, bike..." defaultValue={defaultQ} />
+        <input
+          id="q"
+          name="q"
+          placeholder="couch, dresser, bike..."
+          defaultValue={defaultQ}
+        />
       </div>
+
       <div className="field">
-        <label htmlFor="zip">ZIP code</label>
-        <input id="zip" name="zip" placeholder="10001" defaultValue={defaultZip} />
+        <label htmlFor="borough">Borough</label>
+        <select
+          id="borough"
+          name="borough"
+          defaultValue={defaultBorough || "all"}
+        >
+          <option value="all">All boroughs</option>
+          <option value="manhattan">Manhattan</option>
+          <option value="brooklyn">Brooklyn</option>
+          <option value="queens">Queens</option>
+          <option value="bronx">Bronx</option>
+          <option value="staten island">Staten Island</option>
+        </select>
       </div>
+
       <div className="field">
         <label htmlFor="category">Category</label>
-        <select id="category" name="category" defaultValue={defaultCategory || "all"}>
+        <select
+          id="category"
+          name="category"
+          defaultValue={defaultCategory || "all"}
+        >
           <option value="all">All categories</option>
           <option value="furniture">Furniture</option>
           <option value="appliances">Appliances</option>
@@ -31,6 +53,7 @@ export function SearchForm({
           <option value="other">Other</option>
         </select>
       </div>
+
       <div className="field action-field">
         <button className="button" type="submit">
           Search
