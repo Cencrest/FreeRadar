@@ -1,68 +1,54 @@
 import Link from "next/link";
-import { ListingCard } from "@/components/ListingCard";
 import { SearchForm } from "@/components/SearchForm";
 import { SectionTitle } from "@/components/SectionTitle";
-import { getRecentListings } from "@/lib/data";
 
-export default async function HomePage() {
-  const listings = await getRecentListings(6);
-
+export default function HomePage() {
   return (
     <div className="stack">
-      {/* HERO */}
-      <section className="hero-shell">
-        <div className="card hero-card hero-main-card">
-          <span className="badge">MVP built for launch</span>
-          <h1>Find free stuff near you before everyone else.</h1>
-          <p>
-            FreeRadar lets users search local free listings, save favorites, submit finds,
-            and create email alerts by keyword and ZIP code.
+      <section className="hero-card">
+        <div className="hero-copy">
+          <span className="eyebrow">FreeRadar</span>
+          <h1 className="page-title">Find free stuff near you</h1>
+          <p className="page-subtitle">
+            Browse free items, curb alerts, and community giveaways all in one
+            place.
           </p>
-
-          <div className="split-actions">
-            <Link href="/listings" className="button">
-              Browse listings
-            </Link>
-            <Link href="/submit" className="button secondary">
-              Submit a free item
-            </Link>
-          </div>
         </div>
 
-        <div className="hero-feature-grid">
-          <div className="card hero-feature-card">
-            <h3 className="hero-feature-title">Fast search</h3>
-            <p className="hero-feature-copy">
-              Search free listings by keyword, ZIP code, and category in seconds.
-            </p>
-          </div>
+        <div className="split-actions">
+          <Link href="/listings" className="button">
+            Browse listings
+          </Link>
 
-          <div className="card hero-feature-card">
-            <h3 className="hero-feature-title">Community-powered</h3>
-            <p className="hero-feature-copy">
-              Users can submit free finds to help more people discover useful items nearby.
-            </p>
-          </div>
-
-          <div className="card hero-feature-card">
-            <h3 className="hero-feature-title">Built to grow</h3>
-            <p className="hero-feature-copy">
-              Alerts, favorites, and admin tools are already structured for expansion.
-            </p>
-          </div>
+          <Link href="/submit" className="button secondary">
+            Post something free
+          </Link>
         </div>
       </section>
 
-      {/* SEARCH */}
-      <SearchForm />
+      <section className="card">
+        <SectionTitle
+          title="Search"
+          subtitle="Find free items by keyword, category, or location."
+        />
+        <SearchForm />
+      </section>
 
-      {/* LISTINGS */}
-      <section>
-        <SectionTitle title="Recent free listings" />
-        <div className="grid">
-          {listings.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} />
-          ))}
+      <section className="card" style={{ textAlign: "center" }}>
+        <h2 style={{ marginTop: 0 }}>Browse free items near you</h2>
+        <p className="muted" style={{ marginBottom: 20 }}>
+          See the latest free stuff posted on FreeRadar and imported from local
+          sources.
+        </p>
+
+        <div className="split-actions" style={{ justifyContent: "center" }}>
+          <Link href="/listings" className="button">
+            View listings
+          </Link>
+
+          <Link href="/submit" className="button secondary">
+            Post something free
+          </Link>
         </div>
       </section>
     </div>
