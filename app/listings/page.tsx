@@ -1,34 +1,82 @@
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { importCraigslistNycFreeStuff } from "@/lib/craigslist-import";
 import { ListingCard } from "@/components/ListingCard";
-import { SearchForm } from "@/components/SearchForm";
-import { searchListings } from "@/lib/data";
 
-export default async function ListingsPage(props: any) {
-  const searchParams = (await props.searchParams) ?? {};
-  const q = typeof searchParams.q === "string" ? searchParams.q : "";
-  const zip = typeof searchParams.zip === "string" ? searchParams.zip : "";
-  const category = typeof searchParams.category === "string" ? searchParams.category : "all";
+type Listing = {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  source_url: string | null;
+  category: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  created_at: string;
+};
 
-  const listings = await searchListings({ q, zip, category });
+export default async function ListingsPage() {
+  try {
+    await importCraigslistNycFreeStuff();
+  } catch (error) {
+    console.error("Craigslist auto import failed:", error);
+  }
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("listings")
+    .select(
+      "id, title, description, image_url, source_url, category, city, state, zip, created_at"
+    )
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const listings = (data ?? []) as Listing[];
 
   return (
     <div className="stack">
-      <div>
-        <h1 className="page-title">Listings</h1>
-        <p className="page-subtitle">
-          Search your free-item feed by keyword, ZIP code, or category.
-        </p>
+      <div className="hero-card">
+        <div className="hero-copy">
+          <span className="eyebrow">Listings</span>
+          <h1 className="page-title">Free Stuff Near You</h1>
+          <p className="page-subtitle">
+            Browse FreeRadar listings and freshly imported NYC Craigslist free items.
+          </p>
+        </div>
+
+        <div className="split-actions">
+          <Link href="/submit" className="button">
+            New listing
+          </Link>
+        </div>
       </div>
 
-      <SearchForm defaultQ={q} defaultZip={zip} defaultCategory={category} />
-
-      {listings.length ? (
-        <div className="listings-grid">
+      {listings.length === 0 ? (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>No listings yet</h3>
+          <p className="muted" style={{ marginBottom: 0 }}>
+            Check back in a bit. FreeRadar will keep pulling in fresh listings.
+          </p>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "16px",
+            alignItems: "start",
+          }}
+        >
           {listings.map((listing) => (
             <ListingCard key={listing.id} listing={listing} />
           ))}
         </div>
-      ) : (
-        <div className="empty">No listings matched that search yet.</div>
       )}
     </div>
   );
