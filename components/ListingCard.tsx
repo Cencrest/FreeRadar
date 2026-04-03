@@ -1,90 +1,157 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { importCraigslistNycFreeStuff } from "@/lib/craigslist-import";
-import { ListingCard } from "@/components/ListingCard";
+import ListingImage from "@/components/listing-image";
+import { getListingAgeBadge } from "@/lib/utils";
 
 type Listing = {
   id: string;
   title: string;
-  description: string | null;
-  image_url: string | null;
-  source_url: string | null;
-  category: string | null;
-  city: string | null;
-  state: string | null;
-  zip: string | null;
+  description?: string | null;
+  image_url?: string | null;
+  source_url?: string | null;
+  category?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
   created_at: string;
 };
 
-export default async function ListingsPage() {
-  try {
-    await importCraigslistNycFreeStuff();
-  } catch (error) {
-    console.error("Craigslist auto import failed:", error);
-  }
+type ListingCardProps = {
+  listing: Listing;
+};
 
-  const supabase = await createClient();
+export default function ListingCard({ listing }: ListingCardProps) {
+  const ageBadge = getListingAgeBadge(listing.created_at);
 
-  const { data, error } = await supabase
-    .from("listings")
-    .select(
-      "id, title, description, image_url, source_url, category, city, state, zip, created_at"
-    )
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  const listings = (data ?? []) as Listing[];
+  const isExternalSource =
+    !!listing.source_url &&
+    !listing.source_url.includes("free-radar.vercel.app") &&
+    !listing.source_url.startsWith("/listings/");
 
   return (
-    <div
-      className="stack"
+    <article
+      className="card listing-card"
       style={{
-        maxWidth: "1400px",
-        margin: "0 auto",
-        width: "100%",
+        padding: 0,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: "420px",
       }}
     >
-      <div className="hero-card">
-        <div className="hero-copy">
-          <span className="eyebrow">Listings</span>
-          <h1 className="page-title">Recent free listings</h1>
-          <p className="page-subtitle">
-            Browse FreeRadar posts and recently imported free items.
-          </p>
-        </div>
+      {listing.image_url ? (
+        <Link
+          href={`/listings/${listing.id}`}
+          style={{ display: "block", textDecoration: "none" }}
+        >
+          <ListingImage
+            src={listing.image_url}
+            alt={listing.title}
+            style={{
+              width: "100%",
+              height: "220px",
+              objectFit: "cover",
+              display: "block",
+              borderBottom: "1px solid var(--border)",
+            }}
+          />
+        </Link>
+      ) : null}
 
-        <div className="split-actions">
-          <Link href="/submit" className="button">
-            Post something free
-          </Link>
-        </div>
-      </div>
-
-      {listings.length === 0 ? (
-        <div className="card">
-          <h3 style={{ marginTop: 0 }}>No listings yet</h3>
-          <p className="muted" style={{ marginBottom: 0 }}>
-            FreeRadar is pulling listings. Check back shortly.
-          </p>
-        </div>
-      ) : (
+      <div
+        className="listing-card-body"
+        style={{
+          padding: "16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+          flex: 1,
+        }}
+      >
         <div
+          className="listing-card-meta"
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
-            gap: "18px",
-            alignItems: "stretch",
+            marginBottom: 0,
+            gap: "8px",
+            flexWrap: "wrap",
           }}
         >
-          {listings.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} />
-          ))}
+          {listing.category ? (
+            <span className="badge">{listing.category}</span>
+          ) : null}
+
+          <span
+            className={ageBadge === "New" ? "badge badge-new" : "badge badge-age"}
+          >
+            {ageBadge}
+          </span>
+
+          {listing.city || listing.state ? (
+            <span>{[listing.city, listing.state].filter(Boolean).join(", ")}</span>
+          ) : null}
         </div>
-      )}
-    </div>
+
+        <h3
+          className="listing-title"
+          style={{
+            margin: 0,
+            fontSize: "1.9rem",
+            lineHeight: 1.15,
+          }}
+        >
+          <Link
+            href={`/listings/${listing.id}`}
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
+            {listing.title}
+          </Link>
+        </h3>
+
+        {listing.description ? (
+          <p
+            className="description-clamp"
+            style={{
+              margin: 0,
+              color: "var(--muted-foreground, rgba(255,255,255,0.72))",
+              lineHeight: 1.45,
+            }}
+          >
+            {listing.description}
+          </p>
+        ) : (
+          <p className="description-clamp muted" style={{ margin: 0 }}>
+            No description provided.
+          </p>
+        )}
+
+        <div
+          className="listing-card-footer"
+          style={{
+            marginTop: "auto",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "10px",
+            flexWrap: "wrap",
+            paddingTop: "14px",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          <Link href={`/listings/${listing.id}`} className="button small">
+            View listing
+          </Link>
+
+          {isExternalSource ? (
+            <a
+              href={listing.source_url as string}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="button small secondary"
+            >
+              Original post
+            </a>
+          ) : null}
+        </div>
+      </div>
+    </article>
   );
 }
