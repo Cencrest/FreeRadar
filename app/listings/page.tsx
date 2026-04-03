@@ -16,22 +16,50 @@ type Listing = {
   created_at: string;
 };
 
-export default async function ListingsPage() {
+type ListingsPageProps = {
+  searchParams?: Promise<{
+    q?: string;
+    category?: string;
+    city?: string;
+  }>;
+};
+
+export default async function ListingsPage(props: ListingsPageProps) {
   try {
     await importCraigslistNycFreeStuff();
   } catch (error) {
     console.error("Craigslist auto import failed:", error);
   }
 
+  const searchParams = await props.searchParams;
+  const q = searchParams?.q?.trim() ?? "";
+  const category = searchParams?.category?.trim() ?? "";
+  const city = searchParams?.city?.trim() ?? "";
+
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("listings")
     .select(
       "id, title, description, image_url, source_url, category, city, state, zip, created_at"
     )
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
+    .eq("is_active", true);
+
+  if (q) {
+    query = query.or(
+      `title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%`
+    );
+  }
+
+  if (category) {
+    query = query.ilike("category", `%${category}%`);
+  }
+
+  if (city) {
+    query = query.ilike("city", `%${city}%`);
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false });
 
   if (error) {
     throw new Error(error.message);
@@ -64,11 +92,24 @@ export default async function ListingsPage() {
         </div>
       </div>
 
+      {(q || category || city) ? (
+        <div className="card" style={{ padding: "14px 16px" }}>
+          <strong>Showing results</strong>
+          <div className="muted" style={{ marginTop: 6 }}>
+            {q ? `Keyword: "${q}"` : null}
+            {q && category ? " • " : null}
+            {category ? `Category: "${category}"` : null}
+            {(q || category) && city ? " • " : null}
+            {city ? `City: "${city}"` : null}
+          </div>
+        </div>
+      ) : null}
+
       {listings.length === 0 ? (
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>No listings yet</h3>
+          <h3 style={{ marginTop: 0 }}>No matching listings</h3>
           <p className="muted" style={{ marginBottom: 0 }}>
-            FreeRadar is pulling listings. Check back shortly.
+            Try a different keyword or broader location.
           </p>
         </div>
       ) : (
