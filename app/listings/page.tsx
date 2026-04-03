@@ -19,8 +19,8 @@ type Listing = {
 type ListingsPageProps = {
   searchParams?: Promise<{
     q?: string;
+    zip?: string;
     category?: string;
-    city?: string;
   }>;
 };
 
@@ -33,8 +33,9 @@ export default async function ListingsPage(props: ListingsPageProps) {
 
   const searchParams = await props.searchParams;
   const q = searchParams?.q?.trim() ?? "";
-  const category = searchParams?.category?.trim() ?? "";
-  const city = searchParams?.city?.trim() ?? "";
+  const zip = searchParams?.zip?.trim() ?? "";
+  const rawCategory = searchParams?.category?.trim() ?? "";
+  const category = rawCategory === "all" ? "" : rawCategory;
 
   const supabase = await createClient();
 
@@ -51,12 +52,12 @@ export default async function ListingsPage(props: ListingsPageProps) {
     );
   }
 
-  if (category) {
-    query = query.ilike("category", `%${category}%`);
+  if (zip) {
+    query = query.ilike("zip", `%${zip}%`);
   }
 
-  if (city) {
-    query = query.ilike("city", `%${city}%`);
+  if (category) {
+    query = query.ilike("category", `%${category}%`);
   }
 
   const { data, error } = await query.order("created_at", { ascending: false });
@@ -92,15 +93,15 @@ export default async function ListingsPage(props: ListingsPageProps) {
         </div>
       </div>
 
-      {(q || category || city) ? (
+      {q || zip || category ? (
         <div className="card" style={{ padding: "14px 16px" }}>
           <strong>Showing results</strong>
           <div className="muted" style={{ marginTop: 6 }}>
             {q ? `Keyword: "${q}"` : null}
-            {q && category ? " • " : null}
+            {q && zip ? " • " : null}
+            {zip ? `ZIP: "${zip}"` : null}
+            {(q || zip) && category ? " • " : null}
             {category ? `Category: "${category}"` : null}
-            {(q || category) && city ? " • " : null}
-            {city ? `City: "${city}"` : null}
           </div>
         </div>
       ) : null}
@@ -109,7 +110,7 @@ export default async function ListingsPage(props: ListingsPageProps) {
         <div className="card">
           <h3 style={{ marginTop: 0 }}>No matching listings</h3>
           <p className="muted" style={{ marginBottom: 0 }}>
-            Try a different keyword or broader location.
+            Try a different keyword, ZIP, or category.
           </p>
         </div>
       ) : (
