@@ -17,6 +17,7 @@ type Listing = {
 };
 
 export default async function ListingsPage() {
+  // 🔥 AUTO IMPORT RUNS HERE
   try {
     await importCraigslistNycFreeStuff();
   } catch (error) {
@@ -41,27 +42,29 @@ export default async function ListingsPage() {
 
   return (
     <div className="stack">
+      {/* HEADER */}
       <div className="hero-card">
         <div className="hero-copy">
           <span className="eyebrow">Listings</span>
           <h1 className="page-title">Free Stuff Near You</h1>
           <p className="page-subtitle">
-            Browse FreeRadar listings and freshly imported NYC Craigslist free items.
+            Live feed of FreeRadar + NYC Craigslist free items.
           </p>
         </div>
 
         <div className="split-actions">
           <Link href="/submit" className="button">
-            New listing
+            Post something free
           </Link>
         </div>
       </div>
 
+      {/* EMPTY STATE */}
       {listings.length === 0 ? (
         <div className="card">
           <h3 style={{ marginTop: 0 }}>No listings yet</h3>
           <p className="muted" style={{ marginBottom: 0 }}>
-            Check back in a bit. FreeRadar will keep pulling in fresh listings.
+            FreeRadar is pulling listings. Check back shortly.
           </p>
         </div>
       ) : (
