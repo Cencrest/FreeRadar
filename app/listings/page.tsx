@@ -42,7 +42,6 @@ function getBoroughFilter(borough: string): string[] {
         "west village",
         "lower east side",
       ];
-
     case "brooklyn":
       return [
         "brooklyn",
@@ -57,7 +56,6 @@ function getBoroughFilter(borough: string): string[] {
         "flatbush",
         "dumbo",
       ];
-
     case "queens":
       return [
         "queens",
@@ -71,13 +69,10 @@ function getBoroughFilter(borough: string): string[] {
         "ridgewood",
         "elmhurst",
       ];
-
     case "bronx":
       return ["bronx", "riverdale", "fordham", "pelham", "mott haven"];
-
     case "staten island":
       return ["staten island", "st george", "tottenville", "great kills"];
-
     default:
       return [];
   }
@@ -213,9 +208,10 @@ export default async function ListingsPage(props: ListingsPageProps) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 320px))",
             gap: "16px",
             alignItems: "stretch",
+            justifyContent: "start",
           }}
         >
           {listings.map((listing) => (
