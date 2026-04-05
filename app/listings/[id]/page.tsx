@@ -121,13 +121,20 @@ export default async function ListingDetailPage(props: any) {
             </div>
 
             <div>
-              <span className="muted">Created</span>
+              <span className="muted">Listed on FreeRadar</span>
               <span>
                 {listing.created_at
                   ? formatDate(listing.created_at)
                   : "Unknown"}
               </span>
             </div>
+
+            {listing.original_posted_at ? (
+              <div>
+                <span className="muted">Originally posted</span>
+                <span>{formatDate(listing.original_posted_at)}</span>
+              </div>
+            ) : null}
 
             <div>
               <span className="muted">Status</span>
