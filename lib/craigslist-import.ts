@@ -258,10 +258,24 @@ export async function importCraigslistNycFreeStuff(options?: {
   console.log("New results to import:", newResults.length);
 
   const importedRows: Array<Record<string, unknown>> = [];
+  const preparedTitles = new Set<string>();
 
   for (const result of newResults) {
     try {
       const extracted = await extractListingFromDetailPage(result);
+
+      const dedupeKey = `${(extracted.title || "").trim().toLowerCase()}::${(
+        extracted.city || ""
+      )
+        .trim()
+        .toLowerCase()}`;
+
+      if (preparedTitles.has(dedupeKey)) {
+        console.log("Skipping duplicate prepared row:", dedupeKey);
+        continue;
+      }
+
+      preparedTitles.add(dedupeKey);
 
       const row: Record<string, unknown> = {
         title: extracted.title || "Untitled listing",
@@ -293,15 +307,18 @@ export async function importCraigslistNycFreeStuff(options?: {
     }
   }
 
-  console.log("Rows prepared for insert:", importedRows.length);
+  console.log("Rows prepared for upsert:", importedRows.length);
 
   if (importedRows.length > 0) {
-    const { error: insertError } = await supabase
+    const { error: upsertError } = await supabase
       .from("listings")
-      .insert(importedRows);
+      .upsert(importedRows, {
+        onConflict: "source_url",
+        ignoreDuplicates: true,
+      });
 
-    if (insertError) {
-      throw new Error(`Insert failed: ${insertError.message}`);
+    if (upsertError) {
+      throw new Error(`Upsert failed: ${upsertError.message}`);
     }
   }
 
