@@ -20,6 +20,7 @@ type ImportedListing = {
   city: string;
   state: string;
   zip: string;
+  original_posted_at: string | null;
 };
 
 function pickFirst(...values: Array<string | undefined | null>) {
@@ -61,6 +62,20 @@ function inferCityState(locationText: string) {
     city: cleaned,
     state: "NY",
   };
+}
+
+function normalizePostedAt(value: string | undefined | null) {
+  if (!value) return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.toISOString();
 }
 
 async function fetchHtml(url: string) {
@@ -153,6 +168,13 @@ async function extractListingFromDetailPage(
     $('meta[property="geo.placename"]').attr("content")
   );
 
+  const rawPostedAt = pickFirst(
+    $("time[datetime]").attr("datetime"),
+    $('meta[property="article:published_time"]').attr("content"),
+    $('meta[name="date"]').attr("content")
+  );
+
+  const originalPostedAt = normalizePostedAt(rawPostedAt);
   const { city, state } = inferCityState(locationText);
 
   return {
@@ -164,6 +186,7 @@ async function extractListingFromDetailPage(
     city,
     state,
     zip: "",
+    original_posted_at: originalPostedAt,
   };
 }
 
@@ -249,6 +272,7 @@ export async function importCraigslistNycFreeStuff(options?: {
         city: extracted.city || null,
         state: extracted.state || "NY",
         zip: extracted.zip || null,
+        original_posted_at: extracted.original_posted_at,
         is_active: true,
         active_until: new Date(
           Date.now() + 7 * 24 * 60 * 60 * 1000
