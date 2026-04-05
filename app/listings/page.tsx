@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { importCraigslistNycFreeStuff } from "@/lib/craigslist-import";
 import ListingCard from "@/components/ListingCard";
+import { SearchForm } from "@/components/SearchForm";
 
 type Listing = {
   id: string;
@@ -147,7 +148,7 @@ export default async function ListingsPage(props: ListingsPageProps) {
     <div
       className="stack"
       style={{
-        maxWidth: "1400px",
+        maxWidth: "1500px",
         margin: "0 auto",
         width: "100%",
       }}
@@ -168,16 +169,11 @@ export default async function ListingsPage(props: ListingsPageProps) {
         </div>
       </div>
 
-      {importInfo ? (
-        <div className="card" style={{ padding: "14px 16px" }}>
-          <strong>Feed refresh</strong>
-          <div className="muted" style={{ marginTop: 6 }}>
-            {importInfo.skipped
-              ? "Skipped import because the feed was refreshed recently."
-              : `Checked ${importInfo.checked ?? 0} source listings and imported ${importInfo.imported ?? 0} new ones.`}
-          </div>
-        </div>
-      ) : null}
+      <SearchForm
+        defaultQ={q}
+        defaultBorough={borough}
+        defaultCategory={category}
+      />
 
       {q || borough || category ? (
         <div className="card" style={{ padding: "14px 16px" }}>
@@ -192,6 +188,20 @@ export default async function ListingsPage(props: ListingsPageProps) {
         </div>
       ) : null}
 
+      {importInfo ? (
+        <div
+          className="muted"
+          style={{
+            fontSize: "0.95rem",
+            padding: "0 4px",
+          }}
+        >
+          {importInfo.skipped
+            ? "Feed refreshed recently."
+            : `Checked ${importInfo.checked ?? 0} source listings and imported ${importInfo.imported ?? 0} new ones.`}
+        </div>
+      ) : null}
+
       {listings.length === 0 ? (
         <div className="card">
           <h3 style={{ marginTop: 0 }}>No matching listings</h3>
@@ -203,8 +213,8 @@ export default async function ListingsPage(props: ListingsPageProps) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
-            gap: "18px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "16px",
             alignItems: "stretch",
           }}
         >
