@@ -1,15 +1,26 @@
 export function SearchForm({
   defaultQ = "",
   defaultCategory = "",
-  defaultBorough = ""
+  defaultBorough = "",
 }: {
   defaultQ?: string;
   defaultCategory?: string;
   defaultBorough?: string;
 }) {
   return (
-    <form action="/listings" method="get" className="search-form card">
-      <div className="field">
+    <form
+      action="/listings"
+      method="get"
+      className="card"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+        gap: "12px",
+        alignItems: "end",
+        padding: "16px",
+      }}
+    >
+      <div className="field" style={{ margin: 0 }}>
         <label htmlFor="q">Keyword</label>
         <input
           id="q"
@@ -19,7 +30,7 @@ export function SearchForm({
         />
       </div>
 
-      <div className="field">
+      <div className="field" style={{ margin: 0 }}>
         <label htmlFor="borough">Borough</label>
         <select
           id="borough"
@@ -35,7 +46,7 @@ export function SearchForm({
         </select>
       </div>
 
-      <div className="field">
+      <div className="field" style={{ margin: 0 }}>
         <label htmlFor="category">Category</label>
         <select
           id="category"
@@ -54,8 +65,8 @@ export function SearchForm({
         </select>
       </div>
 
-      <div className="field action-field">
-        <button className="button" type="submit">
+      <div className="field action-field" style={{ margin: 0 }}>
+        <button className="button" type="submit" style={{ width: "100%" }}>
           Search
         </button>
       </div>
