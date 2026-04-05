@@ -36,7 +36,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        minHeight: "420px",
+        minHeight: "360px",
       }}
     >
       {listing.image_url ? (
@@ -49,7 +49,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
             alt={listing.title}
             style={{
               width: "100%",
-              height: "220px",
+              height: "180px",
               objectFit: "cover",
               display: "block",
               borderBottom: "1px solid var(--border)",
@@ -61,10 +61,10 @@ export default function ListingCard({ listing }: ListingCardProps) {
       <div
         className="listing-card-body"
         style={{
-          padding: "16px",
+          padding: "14px",
           display: "flex",
           flexDirection: "column",
-          gap: "12px",
+          gap: "10px",
           flex: 1,
         }}
       >
@@ -95,8 +95,8 @@ export default function ListingCard({ listing }: ListingCardProps) {
           className="listing-title"
           style={{
             margin: 0,
-            fontSize: "1.9rem",
-            lineHeight: 1.15,
+            fontSize: "1.35rem",
+            lineHeight: 1.2,
           }}
         >
           <Link
@@ -113,7 +113,8 @@ export default function ListingCard({ listing }: ListingCardProps) {
             style={{
               margin: 0,
               color: "var(--muted-foreground, rgba(255,255,255,0.72))",
-              lineHeight: 1.45,
+              lineHeight: 1.4,
+              fontSize: "0.95rem",
             }}
           >
             {listing.description}
@@ -130,9 +131,9 @@ export default function ListingCard({ listing }: ListingCardProps) {
             marginTop: "auto",
             display: "flex",
             justifyContent: "space-between",
-            gap: "10px",
+            gap: "8px",
             flexWrap: "wrap",
-            paddingTop: "14px",
+            paddingTop: "12px",
             borderTop: "1px solid rgba(255,255,255,0.08)",
           }}
         >
