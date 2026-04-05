@@ -7,7 +7,10 @@ export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
+  console.log("Cron route hit");
+
   if (!cronSecret) {
+    console.error("CRON_SECRET is not set");
     return NextResponse.json(
       { error: "CRON_SECRET is not set" },
       { status: 500 }
@@ -15,6 +18,7 @@ export async function GET(request: Request) {
   }
 
   if (authHeader !== `Bearer ${cronSecret}`) {
+    console.error("Unauthorized cron request");
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
@@ -23,6 +27,8 @@ export async function GET(request: Request) {
 
   try {
     const result = await importCraigslistNycFreeStuff({ force: true });
+
+    console.log("Cron import result:", result);
 
     return NextResponse.json({
       ok: true,
