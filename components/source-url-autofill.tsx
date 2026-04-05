@@ -13,6 +13,46 @@ type SourceUrlAutofillProps = {
   initialZip?: string;
 };
 
+function splitCityValue(cityValue: string) {
+  if (!cityValue) {
+    return {
+      borough: "",
+      neighborhood: "",
+    };
+  }
+
+  const parts = cityValue.split(",").map((part) => part.trim());
+
+  if (parts.length >= 2) {
+    return {
+      neighborhood: parts[0],
+      borough: parts[1].toLowerCase(),
+    };
+  }
+
+  const normalized = cityValue.trim().toLowerCase();
+
+  const boroughs = [
+    "manhattan",
+    "brooklyn",
+    "queens",
+    "bronx",
+    "staten island",
+  ];
+
+  if (boroughs.includes(normalized)) {
+    return {
+      borough: normalized,
+      neighborhood: "",
+    };
+  }
+
+  return {
+    borough: "",
+    neighborhood: cityValue,
+  };
+}
+
 export default function SourceUrlAutofill({
   initialTitle = "",
   initialDescription = "",
@@ -23,14 +63,17 @@ export default function SourceUrlAutofill({
   initialState = "",
   initialZip = "",
 }: SourceUrlAutofillProps) {
+  const parsedCity = splitCityValue(initialCity);
+
   const [mode, setMode] = useState(initialSourceUrl ? "link" : "manual");
   const [sourceUrl, setSourceUrl] = useState(initialSourceUrl);
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [imageUrl, setImageUrl] = useState(initialImageUrl);
-  const [category, setCategory] = useState(initialCategory);
-  const [city, setCity] = useState(initialCity);
-  const [stateValue, setStateValue] = useState(initialState);
+  const [category, setCategory] = useState(initialCategory || "");
+  const [borough, setBorough] = useState(parsedCity.borough);
+  const [cityDetail, setCityDetail] = useState(parsedCity.neighborhood);
+  const [stateValue, setStateValue] = useState(initialState || "NY");
   const [zip, setZip] = useState(initialZip);
   const [isFetching, setIsFetching] = useState(false);
   const [fetchMessage, setFetchMessage] = useState("");
@@ -81,6 +124,10 @@ export default function SourceUrlAutofill({
     }
   }
 
+  const combinedCity = cityDetail.trim()
+    ? `${cityDetail.trim()}, ${borough}`
+    : borough;
+
   return (
     <div className="stack">
       <div className="card" style={{ padding: "14px" }}>
@@ -104,7 +151,7 @@ export default function SourceUrlAutofill({
 
         <p className="muted" style={{ marginTop: 12, marginBottom: 0 }}>
           {mode === "link"
-            ? "Paste a Craigslist or other listing link and FreeRadar will try to pull the title, image, and description."
+            ? "Paste a listing link and FreeRadar will try to pull the title, image, and description."
             : "Create your own listing manually without using a source link."}
         </p>
       </div>
@@ -213,25 +260,51 @@ export default function SourceUrlAutofill({
       >
         <div className="field">
           <label htmlFor="category">Category</label>
-          <input
+          <select
             id="category"
             name="category"
-            type="text"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            placeholder="furniture, electronics..."
-          />
+            required
+          >
+            <option value="">Select category</option>
+            <option value="furniture">Furniture</option>
+            <option value="appliances">Appliances</option>
+            <option value="electronics">Electronics</option>
+            <option value="home">Home</option>
+            <option value="baby">Baby</option>
+            <option value="tools">Tools</option>
+            <option value="outdoors">Outdoors</option>
+            <option value="other">Other</option>
+            <option value="free stuff">Free Stuff</option>
+          </select>
         </div>
 
         <div className="field">
-          <label htmlFor="city">City</label>
+          <label htmlFor="borough">Borough</label>
+          <select
+            id="borough"
+            value={borough}
+            onChange={(e) => setBorough(e.target.value)}
+            required
+          >
+            <option value="">Select borough</option>
+            <option value="manhattan">Manhattan</option>
+            <option value="brooklyn">Brooklyn</option>
+            <option value="queens">Queens</option>
+            <option value="bronx">Bronx</option>
+            <option value="staten island">Staten Island</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label htmlFor="city_detail">Neighborhood (optional)</label>
           <input
-            id="city"
-            name="city"
+            id="city_detail"
             type="text"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="Brooklyn"
+            value={cityDetail}
+            onChange={(e) => setCityDetail(e.target.value)}
+            placeholder="Williamsburg, Astoria, Harlem..."
           />
         </div>
 
@@ -244,11 +317,12 @@ export default function SourceUrlAutofill({
             value={stateValue}
             onChange={(e) => setStateValue(e.target.value)}
             placeholder="NY"
+            required
           />
         </div>
 
         <div className="field">
-          <label htmlFor="zip">ZIP</label>
+          <label htmlFor="zip">ZIP (optional)</label>
           <input
             id="zip"
             name="zip"
@@ -259,6 +333,8 @@ export default function SourceUrlAutofill({
           />
         </div>
       </div>
+
+      <input type="hidden" name="city" value={combinedCity} />
     </div>
   );
 }
