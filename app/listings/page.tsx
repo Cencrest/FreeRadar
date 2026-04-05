@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { importCraigslistNycFreeStuff } from "@/lib/craigslist-import";
 import ListingCard from "@/components/ListingCard";
 
 type Listing = {
@@ -30,7 +29,6 @@ function getBoroughFilter(borough: string) {
       return [
         "manhattan",
         "new york",
-        "nyc",
         "harlem",
         "upper east side",
         "upper west side",
@@ -70,32 +68,15 @@ function getBoroughFilter(borough: string) {
         "elmhurst"
       ];
     case "bronx":
-      return [
-        "bronx",
-        "riverdale",
-        "fordham",
-        "pelham",
-        "mott haven"
-      ];
+      return ["bronx", "riverdale", "fordham", "pelham", "mott haven"];
     case "staten island":
-      return [
-        "staten island",
-        "st george",
-        "tottenville",
-        "great kills"
-      ];
+      return ["staten island", "st george", "tottenville", "great kills"];
     default:
       return [];
   }
 }
 
 export default async function ListingsPage(props: ListingsPageProps) {
-  try {
-    await importCraigslistNycFreeStuff();
-  } catch (error) {
-    console.error("Craigslist auto import failed:", error);
-  }
-
   const searchParams = await props.searchParams;
   const q = searchParams?.q?.trim() ?? "";
   const rawBorough = searchParams?.borough?.trim() ?? "";
