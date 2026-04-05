@@ -1,11 +1,10 @@
 import * as cheerio from "cheerio";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-const NYC_FREE_STUFF_URL =
-  "https://newyork.craigslist.org/search/zip#search=2~gallery~6";
-
+const NYC_FREE_STUFF_URL = "https://newyork.craigslist.org/search/zip";
 const MAX_RESULTS_TO_IMPORT = 24;
 const IMPORT_COOLDOWN_MINUTES = 15;
+const IMPORT_OWNER_USER_ID = process.env.IMPORT_OWNER_USER_ID || null;
 
 type SearchResult = {
   source_url: string;
@@ -41,6 +40,7 @@ function absoluteUrl(value: string | undefined | null, base: string) {
 
 function inferCityState(locationText: string) {
   const cleaned = (locationText || "").trim();
+
   if (!cleaned) {
     return { city: "", state: "NY" };
   }
@@ -64,6 +64,8 @@ function inferCityState(locationText: string) {
 }
 
 async function fetchHtml(url: string) {
+  console.log("Fetching URL:", url);
+
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -72,6 +74,8 @@ async function fetchHtml(url: string) {
     },
     cache: "no-store",
   });
+
+  console.log("Fetch status:", url, response.status);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url} (${response.status})`);
@@ -90,11 +94,9 @@ async function extractSearchResults(searchUrl: string): Promise<SearchResult[]> 
   $("a[href]").each((_, el) => {
     const href = $(el).attr("href") || "";
     const text = $(el).text().trim();
-
-    if (!href || !text) return;
-
     const absolute = absoluteUrl(href, searchUrl);
 
+    if (!href || !text) return;
     if (!absolute.includes("craigslist.org")) return;
     if (!absolute.includes(".html")) return;
     if (seen.has(absolute)) return;
@@ -106,6 +108,12 @@ async function extractSearchResults(searchUrl: string): Promise<SearchResult[]> 
       title: text,
     });
   });
+
+  console.log("Search results found:", results.length);
+  console.log(
+    "First few results:",
+    results.slice(0, 5).map((r) => r.source_url)
+  );
 
   return results.slice(0, MAX_RESULTS_TO_IMPORT);
 }
@@ -127,10 +135,7 @@ async function extractListingFromDetailPage(
   const description = pickFirst(
     $('meta[property="og:description"]').attr("content"),
     $('meta[name="description"]').attr("content"),
-    $("#postingbody")
-      .text()
-      .replace("QR Code Link to This Post", "")
-      .trim()
+    $("#postingbody").text().replace("QR Code Link to This Post", "").trim()
   );
 
   const imageUrl = absoluteUrl(
@@ -165,8 +170,12 @@ async function extractListingFromDetailPage(
 export async function importCraigslistNycFreeStuff(options?: {
   force?: boolean;
 }) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const force = options?.force ?? false;
+
+  console.log("=== IMPORT START ===");
+  console.log("Force:", force);
+  console.log("IMPORT_OWNER_USER_ID present:", !!IMPORT_OWNER_USER_ID);
 
   const cooldownCutoff = new Date(
     Date.now() - IMPORT_COOLDOWN_MINUTES * 60 * 1000
@@ -182,13 +191,15 @@ export async function importCraigslistNycFreeStuff(options?: {
       .limit(1);
 
     if (recentError) {
-      throw new Error(recentError.message);
+      throw new Error(`Recent rows check failed: ${recentError.message}`);
     }
 
     if (recentRows && recentRows.length > 0) {
+      console.log("Skipping import due to cooldown");
       return {
         imported: 0,
         skipped: true,
+        checked: 0,
       };
     }
   }
@@ -196,9 +207,11 @@ export async function importCraigslistNycFreeStuff(options?: {
   const searchResults = await extractSearchResults(NYC_FREE_STUFF_URL);
 
   if (searchResults.length === 0) {
+    console.log("No search results found");
     return {
       imported: 0,
       skipped: false,
+      checked: 0,
     };
   }
 
@@ -210,16 +223,16 @@ export async function importCraigslistNycFreeStuff(options?: {
     .in("source_url", sourceUrls);
 
   if (existingError) {
-    throw new Error(existingError.message);
+    throw new Error(`Existing rows check failed: ${existingError.message}`);
   }
 
-  const existing = new Set(
-    (existingRows ?? []).map((row) => row.source_url)
-  );
-
+  const existing = new Set((existingRows ?? []).map((row) => row.source_url));
   const newResults = searchResults.filter(
     (result) => !existing.has(result.source_url)
   );
+
+  console.log("Existing rows found:", existing.size);
+  console.log("New results to import:", newResults.length);
 
   const importedRows: Array<Record<string, unknown>> = [];
 
@@ -227,7 +240,7 @@ export async function importCraigslistNycFreeStuff(options?: {
     try {
       const extracted = await extractListingFromDetailPage(result);
 
-      importedRows.push({
+      const row: Record<string, unknown> = {
         title: extracted.title || "Untitled listing",
         description: extracted.description || "Imported from Craigslist.",
         image_url: extracted.image_url || null,
@@ -240,15 +253,23 @@ export async function importCraigslistNycFreeStuff(options?: {
         active_until: new Date(
           Date.now() + 7 * 24 * 60 * 60 * 1000
         ).toISOString(),
-      });
+      };
+
+      if (IMPORT_OWNER_USER_ID) {
+        row.user_id = IMPORT_OWNER_USER_ID;
+      }
+
+      importedRows.push(row);
     } catch (error) {
       console.error(
-        "Failed to import Craigslist listing:",
+        "Failed to extract listing detail page:",
         result.source_url,
         error
       );
     }
   }
+
+  console.log("Rows prepared for insert:", importedRows.length);
 
   if (importedRows.length > 0) {
     const { error: insertError } = await supabase
@@ -256,12 +277,15 @@ export async function importCraigslistNycFreeStuff(options?: {
       .insert(importedRows);
 
     if (insertError) {
-      throw new Error(insertError.message);
+      throw new Error(`Insert failed: ${insertError.message}`);
     }
   }
+
+  console.log("=== IMPORT COMPLETE ===");
 
   return {
     imported: importedRows.length,
     skipped: false,
+    checked: searchResults.length,
   };
 }
