@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type SourceUrlAutofillProps = {
   initialTitle?: string;
@@ -11,6 +11,7 @@ type SourceUrlAutofillProps = {
   initialCity?: string;
   initialState?: string;
   initialZip?: string;
+  onValidityChange?: (isValid: boolean) => void;
 };
 
 function splitCityValue(cityValue: string) {
@@ -31,7 +32,6 @@ function splitCityValue(cityValue: string) {
   }
 
   const normalized = cityValue.trim().toLowerCase();
-
   const boroughs = [
     "manhattan",
     "brooklyn",
@@ -62,10 +62,13 @@ export default function SourceUrlAutofill({
   initialCity = "",
   initialState = "",
   initialZip = "",
+  onValidityChange,
 }: SourceUrlAutofillProps) {
   const parsedCity = splitCityValue(initialCity);
 
-  const [mode, setMode] = useState(initialSourceUrl ? "link" : "manual");
+  const [mode, setMode] = useState<"link" | "manual">(
+    initialSourceUrl ? "link" : "manual"
+  );
   const [sourceUrl, setSourceUrl] = useState(initialSourceUrl);
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
@@ -77,6 +80,18 @@ export default function SourceUrlAutofill({
   const [zip, setZip] = useState(initialZip);
   const [isFetching, setIsFetching] = useState(false);
   const [fetchMessage, setFetchMessage] = useState("");
+
+  const isValid = useMemo(() => {
+    return (
+      title.trim().length > 0 &&
+      category.trim().length > 0 &&
+      borough.trim().length > 0
+    );
+  }, [title, category, borough]);
+
+  useEffect(() => {
+    onValidityChange?.(isValid);
+  }, [isValid, onValidityChange]);
 
   async function handleFetchPreview() {
     if (!sourceUrl.trim()) return;
