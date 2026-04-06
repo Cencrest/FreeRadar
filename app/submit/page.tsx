@@ -6,7 +6,7 @@ import {
   createSubmissionAction,
   updateListingAction,
 } from "@/app/submit/actions";
-import SourceUrlAutofill from "@/components/source-url-autofill";
+import SubmitListingForm from "@/components/submit-listing-form";
 
 type SubmitPageProps = {
   searchParams?: Promise<{
@@ -73,8 +73,45 @@ export default async function SubmitPage(props: SubmitPageProps) {
             {isEditMode ? "Update Listing" : "Post a New Listing"}
           </h1>
           <p className="page-subtitle">
-            {isEditMode
-              ? "Make changes to your existing FreeRadar post."
+            Create your own post manually or import one from a link.
+          </p>
+        </div>
+
+        <div className="split-actions">
+          <Link href="/dashboard" className="button secondary">
+            Back to dashboard
+          </Link>
+          <Link href="/listings" className="button secondary">
+            Browse listings
+          </Link>
+        </div>
+      </div>
+
+      <div
+        className="card"
+        style={{
+          maxWidth: "820px",
+          margin: "0 auto",
+          width: "100%",
+        }}
+      >
+        <SubmitListingForm
+          formAction={isEditMode ? updateListingAction : createSubmissionAction}
+          isEditMode={isEditMode}
+          listingId={listing?.id}
+          initialTitle={listing?.title ?? ""}
+          initialDescription={listing?.description ?? ""}
+          initialImageUrl={listing?.image_url ?? ""}
+          initialSourceUrl={listing?.source_url ?? ""}
+          initialCategory={listing?.category ?? ""}
+          initialCity={listing?.city ?? ""}
+          initialState={listing?.state ?? ""}
+          initialZip={listing?.zip ?? ""}
+        />
+      </div>
+    </div>
+  );
+}              ? "Make changes to your existing FreeRadar post."
               : "Paste a source link and FreeRadar will try to pull the title, image, and description automatically."}
           </p>
         </div>
