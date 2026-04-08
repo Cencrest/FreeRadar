@@ -1,12 +1,14 @@
+type SearchFormProps = {
+  defaultQ?: string;
+  defaultCategory?: string;
+  defaultBorough?: string;
+};
+
 export function SearchForm({
   defaultQ = "",
   defaultCategory = "",
   defaultBorough = "",
-}: {
-  defaultQ?: string;
-  defaultCategory?: string;
-  defaultBorough?: string;
-}) {
+}: SearchFormProps) {
   return (
     <form
       action="/listings"
@@ -63,44 +65,6 @@ export function SearchForm({
           <option value="outdoors">Outdoors</option>
           <option value="other">Other</option>
           <option value="free stuff">Free Stuff</option>
-        </select>
-      </div>
-
-      <div className="field action-field" style={{ margin: 0 }}>
-        <button className="button" type="submit" style={{ width: "100%" }}>
-          Search
-        </button>
-      </div>
-    </form>
-  );
-}          name="borough"
-          defaultValue={defaultBorough || "all"}
-        >
-          <option value="all">All boroughs</option>
-          <option value="manhattan">Manhattan</option>
-          <option value="brooklyn">Brooklyn</option>
-          <option value="queens">Queens</option>
-          <option value="bronx">Bronx</option>
-          <option value="staten island">Staten Island</option>
-        </select>
-      </div>
-
-      <div className="field" style={{ margin: 0 }}>
-        <label htmlFor="category">Category</label>
-        <select
-          id="category"
-          name="category"
-          defaultValue={defaultCategory || "all"}
-        >
-          <option value="all">All categories</option>
-          <option value="furniture">Furniture</option>
-          <option value="appliances">Appliances</option>
-          <option value="electronics">Electronics</option>
-          <option value="home">Home</option>
-          <option value="baby">Baby</option>
-          <option value="tools">Tools</option>
-          <option value="outdoors">Outdoors</option>
-          <option value="other">Other</option>
         </select>
       </div>
 
