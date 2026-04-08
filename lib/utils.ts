@@ -1,24 +1,25 @@
-export function formatDate(value: string | number | Date) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
+// Format date like: Apr 8, 2026
+export function formatDate(dateString: string) {
+  const date = new Date(dateString);
 
   return date.toLocaleDateString("en-US", {
+    year: "numeric",
     month: "short",
     day: "numeric",
-    year: "numeric",
   });
 }
 
+// Format location like: Brooklyn, NY
 export function formatLocation(
   city?: string | null,
   state?: string | null,
   zip?: string | null
 ) {
-  return [city, state, zip].filter(Boolean).join(", ");
+  const parts = [city, state].filter(Boolean);
+  return parts.join(", ");
 }
+
+// Badge logic (NEW CLEAN VERSION)
 export function getListingAgeBadge(dateString: string) {
   const created = new Date(dateString);
   const now = new Date();
@@ -45,7 +46,4 @@ export function getListingAgeBadge(dateString: string) {
   }
 
   return `${diffDays}d ago`;
-}
-
-  return `${diffDays} days ago`;
 }
