@@ -19,22 +19,33 @@ export function formatLocation(
 ) {
   return [city, state, zip].filter(Boolean).join(", ");
 }
-
-export function getListingAgeBadge(createdAt: string) {
-  const created = new Date(createdAt);
+export function getListingAgeBadge(dateString: string) {
+  const created = new Date(dateString);
   const now = new Date();
 
-  if (Number.isNaN(created.getTime())) {
-    return "";
+  const diffMs = now.getTime() - created.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMinutes < 1) {
+    return "Just now";
   }
 
-  const diffMs = now.getTime() - created.getTime();
-  const diffHours = diffMs / (1000 * 60 * 60);
+  if (diffMinutes < 60) {
+    return `${diffMinutes}m ago`;
+  }
 
   if (diffHours < 24) {
-    return "New";
+    return `${diffHours}h ago`;
   }
 
-  const diffDays = Math.floor(diffHours / 24);
-  return `Day ${diffDays}`;
+  if (diffDays === 1) {
+    return "Yesterday";
+  }
+
+  return `${diffDays}d ago`;
+}
+
+  return `${diffDays} days ago`;
 }
