@@ -1,7 +1,9 @@
 import * as cheerio from "cheerio";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const NYC_FREE_STUFF_URL = "https://newyork.craigslist.org/search/zip";
+const NYC_FREE_STUFF_RSS_URL =
+  "https://newyork.craigslist.org/search/zip?format=rss";
+
 const MAX_RESULTS_TO_IMPORT = 24;
 const IMPORT_COOLDOWN_MINUTES = 15;
 const IMPORT_OWNER_USER_ID = process.env.IMPORT_OWNER_USER_ID || null;
@@ -78,9 +80,7 @@ function normalizePostedAt(value: string | undefined | null) {
   return parsed.toISOString();
 }
 
-async function fetchHtml(url: string) {
-  console.log("Fetching URL:", url);
-
+async function fetchText(url: string) {
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -90,8 +90,6 @@ async function fetchHtml(url: string) {
     cache: "no-store",
   });
 
-  console.log("Fetch status:", url, response.status);
-
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url} (${response.status})`);
   }
@@ -99,36 +97,26 @@ async function fetchHtml(url: string) {
   return response.text();
 }
 
-async function extractSearchResults(searchUrl: string): Promise<SearchResult[]> {
-  const html = await fetchHtml(searchUrl);
-  const $ = cheerio.load(html);
+async function extractSearchResultsFromRss(rssUrl: string): Promise<SearchResult[]> {
+  const xml = await fetchText(rssUrl);
+  const $ = cheerio.load(xml, { xmlMode: true });
 
   const results: SearchResult[] = [];
   const seen = new Set<string>();
 
-  $("a[href]").each((_, el) => {
-    const href = $(el).attr("href") || "";
-    const text = $(el).text().trim();
-    const absolute = absoluteUrl(href, searchUrl);
+  $("item").each((_, el) => {
+    const title = $(el).find("title").first().text().trim();
+    const link = $(el).find("link").first().text().trim();
 
-    if (!href || !text) return;
-    if (!absolute.includes("craigslist.org")) return;
-    if (!absolute.includes(".html")) return;
-    if (seen.has(absolute)) return;
+    if (!title || !link) return;
+    if (seen.has(link)) return;
 
-    seen.add(absolute);
-
+    seen.add(link);
     results.push({
-      source_url: absolute,
-      title: text,
+      title,
+      source_url: link,
     });
   });
-
-  console.log("Search results found:", results.length);
-  console.log(
-    "First few results:",
-    results.slice(0, 5).map((r) => r.source_url)
-  );
 
   return results.slice(0, MAX_RESULTS_TO_IMPORT);
 }
@@ -136,7 +124,7 @@ async function extractSearchResults(searchUrl: string): Promise<SearchResult[]> 
 async function extractListingFromDetailPage(
   result: SearchResult
 ): Promise<ImportedListing> {
-  const html = await fetchHtml(result.source_url);
+  const html = await fetchText(result.source_url);
   const $ = cheerio.load(html);
 
   const title = pickFirst(
@@ -196,10 +184,6 @@ export async function importCraigslistNycFreeStuff(options?: {
   const supabase = createAdminClient();
   const force = options?.force ?? false;
 
-  console.log("=== IMPORT START ===");
-  console.log("Force:", force);
-  console.log("IMPORT_OWNER_USER_ID present:", !!IMPORT_OWNER_USER_ID);
-
   const cooldownCutoff = new Date(
     Date.now() - IMPORT_COOLDOWN_MINUTES * 60 * 1000
   ).toISOString();
@@ -218,7 +202,6 @@ export async function importCraigslistNycFreeStuff(options?: {
     }
 
     if (recentRows && recentRows.length > 0) {
-      console.log("Skipping import due to cooldown");
       return {
         imported: 0,
         skipped: true,
@@ -227,10 +210,9 @@ export async function importCraigslistNycFreeStuff(options?: {
     }
   }
 
-  const searchResults = await extractSearchResults(NYC_FREE_STUFF_URL);
+  const searchResults = await extractSearchResultsFromRss(NYC_FREE_STUFF_RSS_URL);
 
   if (searchResults.length === 0) {
-    console.log("No search results found");
     return {
       imported: 0,
       skipped: false,
@@ -254,9 +236,6 @@ export async function importCraigslistNycFreeStuff(options?: {
     (result) => !existing.has(result.source_url)
   );
 
-  console.log("Existing rows found:", existing.size);
-  console.log("New results to import:", newResults.length);
-
   const importedRows: Array<Record<string, unknown>> = [];
   const preparedTitles = new Set<string>();
 
@@ -271,7 +250,6 @@ export async function importCraigslistNycFreeStuff(options?: {
         .toLowerCase()}`;
 
       if (preparedTitles.has(dedupeKey)) {
-        console.log("Skipping duplicate prepared row:", dedupeKey);
         continue;
       }
 
@@ -307,8 +285,6 @@ export async function importCraigslistNycFreeStuff(options?: {
     }
   }
 
-  console.log("Rows prepared for upsert:", importedRows.length);
-
   if (importedRows.length > 0) {
     const { error: upsertError } = await supabase
       .from("listings")
@@ -321,8 +297,6 @@ export async function importCraigslistNycFreeStuff(options?: {
       throw new Error(`Upsert failed: ${upsertError.message}`);
     }
   }
-
-  console.log("=== IMPORT COMPLETE ===");
 
   return {
     imported: importedRows.length,
