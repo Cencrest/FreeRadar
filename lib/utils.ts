@@ -1,4 +1,7 @@
-// Format date like: Apr 8, 2026
+export function classNames(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
 export function formatDate(dateString: string) {
   const date = new Date(dateString);
 
@@ -9,17 +12,18 @@ export function formatDate(dateString: string) {
   });
 }
 
-// Format location like: Brooklyn, NY
 export function formatLocation(
   city?: string | null,
   state?: string | null,
   zip?: string | null
 ) {
   const parts = [city, state].filter(Boolean);
-  return parts.join(", ");
+  if (parts.length > 0) {
+    return parts.join(", ");
+  }
+  return zip || "";
 }
 
-// Badge logic (NEW CLEAN VERSION)
 export function getListingAgeBadge(dateString: string) {
   const created = new Date(dateString);
   const now = new Date();
@@ -46,4 +50,16 @@ export function getListingAgeBadge(dateString: string) {
   }
 
   return `${diffDays}d ago`;
+}
+
+export function buildSearchParams(params: Record<string, string | undefined>) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value && value.trim()) {
+      searchParams.set(key, value.trim());
+    }
+  });
+
+  return searchParams.toString();
 }
