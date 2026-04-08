@@ -37,6 +37,8 @@ export default function ListingCard({ listing }: ListingCardProps) {
         flexDirection: "column",
         height: "100%",
         minHeight: "360px",
+        width: "100%",
+        maxWidth: "320px",
       }}
     >
       {listing.image_url ? (
@@ -81,7 +83,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
           ) : null}
 
           <span
-            className={ageBadge === "New" ? "badge badge-new" : "badge badge-age"}
+            className={ageBadge === "Just now" ? "badge badge-new" : "badge badge-age"}
           >
             {ageBadge}
           </span>
