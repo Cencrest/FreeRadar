@@ -1,10 +1,10 @@
 import * as cheerio from "cheerio";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const NYC_FREE_STUFF_RSS_URL =
-  "https://newyork.craigslist.org/search/zip?format=rss";
+const NYC_FREE_STUFF_URL =
+  "https://newyork.craigslist.org/search/zip#search=2~list~1440";
 
-const MAX_RESULTS_TO_IMPORT = 24;
+const MAX_RESULTS_TO_IMPORT = 36;
 const IMPORT_COOLDOWN_MINUTES = 15;
 const IMPORT_OWNER_USER_ID = process.env.IMPORT_OWNER_USER_ID || null;
 
@@ -80,8 +80,20 @@ function normalizePostedAt(value: string | undefined | null) {
   return parsed.toISOString();
 }
 
+function stripHash(url: string) {
+  try {
+    const parsed = new URL(url);
+    parsed.hash = "";
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 async function fetchText(url: string) {
-  const response = await fetch(url, {
+  const safeUrl = stripHash(url);
+
+  const response = await fetch(safeUrl, {
     method: "GET",
     headers: {
       "User-Agent":
@@ -91,30 +103,36 @@ async function fetchText(url: string) {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch ${url} (${response.status})`);
+    throw new Error(`Failed to fetch ${safeUrl} (${response.status})`);
   }
 
   return response.text();
 }
 
-async function extractSearchResultsFromRss(rssUrl: string): Promise<SearchResult[]> {
-  const xml = await fetchText(rssUrl);
-  const $ = cheerio.load(xml, { xmlMode: true });
+async function extractSearchResults(searchUrl: string): Promise<SearchResult[]> {
+  const html = await fetchText(searchUrl);
+  const $ = cheerio.load(html);
 
   const results: SearchResult[] = [];
   const seen = new Set<string>();
 
-  $("item").each((_, el) => {
-    const title = $(el).find("title").first().text().trim();
-    const link = $(el).find("link").first().text().trim();
+  $("a[href]").each((_, el) => {
+    const href = $(el).attr("href") || "";
+    const text = $(el).text().trim();
 
-    if (!title || !link) return;
-    if (seen.has(link)) return;
+    if (!href || !text) return;
 
-    seen.add(link);
+    const absolute = absoluteUrl(href, searchUrl);
+
+    if (!absolute.includes("craigslist.org")) return;
+    if (!absolute.includes(".html")) return;
+    if (seen.has(absolute)) return;
+
+    seen.add(absolute);
+
     results.push({
-      title,
-      source_url: link,
+      source_url: absolute,
+      title: text,
     });
   });
 
@@ -210,7 +228,7 @@ export async function importCraigslistNycFreeStuff(options?: {
     }
   }
 
-  const searchResults = await extractSearchResultsFromRss(NYC_FREE_STUFF_RSS_URL);
+  const searchResults = await extractSearchResults(NYC_FREE_STUFF_URL);
 
   if (searchResults.length === 0) {
     return {
@@ -232,6 +250,7 @@ export async function importCraigslistNycFreeStuff(options?: {
   }
 
   const existing = new Set((existingRows ?? []).map((row) => row.source_url));
+
   const newResults = searchResults.filter(
     (result) => !existing.has(result.source_url)
   );
