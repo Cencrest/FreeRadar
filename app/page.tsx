@@ -9,7 +9,8 @@ export default function HomePage() {
           <span className="eyebrow">FreeRadar</span>
           <h1 className="page-title">Find free stuff near you</h1>
           <p className="page-subtitle">
-            Browse free items, curb alerts, and community giveaways all in one place.
+            Browse free items, curb alerts, and community giveaways all in one
+            place.
           </p>
         </div>
 
@@ -27,24 +28,6 @@ export default function HomePage() {
       <SearchForm />
 
       <section className="card" style={{ textAlign: "center" }}>
-        <h2 style={{ marginTop: 0 }}>Browse free items near you</h2>
-        <p className="muted" style={{ marginBottom: 20 }}>
-          See the latest free stuff posted on FreeRadar and imported from local sources.
-        </p>
-
-        <div className="split-actions" style={{ justifyContent: "center" }}>
-          <Link href="/listings" className="button">
-            View listings
-          </Link>
-
-          <Link href="/submit" className="button secondary">
-            Post something free
-          </Link>
-        </div>
-      </section>
-    </div>
-  );
-}      <section className="card" style={{ textAlign: "center" }}>
         <h2 style={{ marginTop: 0 }}>Browse free items near you</h2>
         <p className="muted" style={{ marginBottom: 20 }}>
           See the latest free stuff posted on FreeRadar and imported from local
