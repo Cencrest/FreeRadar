@@ -4,6 +4,8 @@ import { importCraigslistNycFreeStuff } from "@/lib/craigslist-import";
 import ListingCard from "@/components/ListingCard";
 import { SearchForm } from "@/components/SearchForm";
 
+export const dynamic = "force-dynamic"; // ← THIS IS THE FIX
+
 type Listing = {
   id: string;
   title: string;
@@ -28,47 +30,11 @@ type ListingsPageProps = {
 function getBoroughFilter(borough: string): string[] {
   switch (borough.toLowerCase()) {
     case "manhattan":
-      return [
-        "manhattan",
-        "new york",
-        "harlem",
-        "upper east side",
-        "upper west side",
-        "midtown",
-        "chelsea",
-        "soho",
-        "tribeca",
-        "east village",
-        "west village",
-        "lower east side",
-      ];
+      return ["manhattan", "new york", "harlem", "upper east side", "upper west side", "midtown", "chelsea", "soho", "tribeca", "east village", "west village", "lower east side"];
     case "brooklyn":
-      return [
-        "brooklyn",
-        "williamsburg",
-        "greenpoint",
-        "bushwick",
-        "bed-stuy",
-        "bedford-stuyvesant",
-        "park slope",
-        "crown heights",
-        "bay ridge",
-        "flatbush",
-        "dumbo",
-      ];
+      return ["brooklyn", "williamsburg", "greenpoint", "bushwick", "bed-stuy", "bedford-stuyvesant", "park slope", "crown heights", "bay ridge", "flatbush", "dumbo"];
     case "queens":
-      return [
-        "queens",
-        "astoria",
-        "long island city",
-        "lic",
-        "flushing",
-        "jamaica",
-        "forest hills",
-        "sunnyside",
-        "ridgewood",
-        "elmhurst",
-      ];
+      return ["queens", "astoria", "long island city", "lic", "flushing", "jamaica", "forest hills", "sunnyside", "ridgewood", "elmhurst"];
     case "bronx":
       return ["bronx", "riverdale", "fordham", "pelham", "mott haven"];
     case "staten island":
@@ -79,12 +45,7 @@ function getBoroughFilter(borough: string): string[] {
 }
 
 export default async function ListingsPage(props: ListingsPageProps) {
-  let importInfo: {
-    imported?: number;
-    skipped?: boolean;
-    checked?: number;
-  } | null = null;
-
+  let importInfo: { imported: number; skipped: boolean; checked: number } | null = null;
   try {
     importInfo = await importCraigslistNycFreeStuff();
   } catch (error) {
@@ -92,26 +53,21 @@ export default async function ListingsPage(props: ListingsPageProps) {
   }
 
   const searchParams = await props.searchParams;
-  const q = searchParams?.q?.trim() ?? "";
-  const rawBorough = searchParams?.borough?.trim() ?? "";
-  const rawCategory = searchParams?.category?.trim() ?? "";
+  const q = searchParams?.q?.trim();
+  const rawBorough = searchParams?.borough?.trim();
+  const rawCategory = searchParams?.category?.trim();
 
-  const borough = rawBorough === "all" ? "" : rawBorough;
-  const category = rawCategory === "all" ? "" : rawCategory;
+  const borough = rawBorough === "all" ? undefined : rawBorough;
+  const category = rawCategory === "all" ? undefined : rawCategory;
 
   const supabase = await createClient();
-
   let query = supabase
     .from("listings")
-    .select(
-      "id, title, description, image_url, source_url, category, city, state, zip, created_at"
-    )
+    .select("id, title, description, image_url, source_url, category, city, state, zip, created_at")
     .eq("is_active", true);
 
   if (q) {
-    query = query.or(
-      `title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%`
-    );
+    query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%`);
   }
 
   if (category) {
@@ -120,12 +76,8 @@ export default async function ListingsPage(props: ListingsPageProps) {
 
   if (borough) {
     const boroughTerms = getBoroughFilter(borough);
-
-    if (boroughTerms.length > 0) {
-      const boroughOr = boroughTerms
-        .map((term) => `city.ilike.%${term}%`)
-        .join(",");
-
+    if (boroughTerms.length) {
+      const boroughOr = boroughTerms.map((term) => `city.ilike.%${term}%`).join(",");
       query = query.or(boroughOr);
     }
   }
@@ -139,66 +91,48 @@ export default async function ListingsPage(props: ListingsPageProps) {
   const listings = (data ?? []) as Listing[];
 
   return (
-    <div
-      className="stack"
-      style={{
-        maxWidth: "1500px",
-        margin: "0 auto",
-        width: "100%",
-      }}
-    >
+    <div className="stack" style={{ maxWidth: "1500px", margin: "0 auto", width: "100%" }}>
       <div className="hero-card">
         <div className="hero-copy">
           <span className="eyebrow">Listings</span>
           <h1 className="page-title">Recent free listings</h1>
-          <p className="page-subtitle">
-            Browse FreeRadar posts and recently imported free items.
-          </p>
+          <p className="page-subtitle">Browse FreeRadar posts and recently imported free items.</p>
         </div>
-
-        <div className="split-actions">
-          <Link href="/submit" className="button">
-            Post something free
-          </Link>
+        <div>
+          <div className="split-actions">
+            <Link href="/submit" className="button">
+              Post something free
+            </Link>
+          </div>
         </div>
       </div>
 
-      <SearchForm
-        defaultQ={q}
-        defaultBorough={borough}
-        defaultCategory={category}
-      />
+      <SearchForm defaultQ={q} defaultBorough={borough} defaultCategory={category} />
 
-      {q || borough || category ? (
-        <div className="card" style={{ padding: "14px 16px" }}>
-          <strong>Showing results</strong>
-          <div className="muted" style={{ marginTop: 6 }}>
-            {q ? `Keyword: "${q}"` : null}
-            {q && borough ? " • " : null}
-            {borough ? `Borough: "${borough}"` : null}
-            {(q || borough) && category ? " • " : null}
-            {category ? `Category: "${category}"` : null}
+      <div className="card" style={{ padding: "14px 16px" }}>
+        Showing <strong>{listings.length}</strong> results
+        <div className="muted" style={{ marginTop: 4 }}>
+          {q ? `Keyword: "${q}"` : null}
+          {q && borough ? " • " : null}
+          {borough ? `Borough: "${borough}"` : null}
+          {(q || borough) && category ? " • " : null}
+          {category ? `Category: "${category}"` : null}
+        </div>
+      </div>
+
+      <div>
+        {importInfo && (
+          <div className="muted" style={{ fontSize: "0.95rem", padding: "0 4px" }}>
+            {importInfo.skipped
+              ? "Feed refreshed recently."
+              : `Checked source listings and imported new ones. (checked: ${importInfo.checked}, imported: ${importInfo.imported})`}
           </div>
-        </div>
-      ) : null}
-
-      {importInfo ? (
-        <div
-          className="muted"
-          style={{
-            fontSize: "0.95rem",
-            padding: "0 4px",
-          }}
-        >
-          {importInfo.skipped
-            ? "Feed refreshed recently."
-            : `Checked ${importInfo.checked ?? 0} source listings and imported ${importInfo.imported ?? 0} new ones.`}
-        </div>
-      ) : null}
+        )}
+      </div>
 
       {listings.length === 0 ? (
-        <div className="card">
-          <h3 style={{ marginTop: 0 }}>No matching listings</h3>
+        <div className="card" style={{ marginTop: 8 }}>
+          <h2>No matching listings</h2>
           <p className="muted" style={{ marginBottom: 0 }}>
             Try a different keyword, borough, or category.
           </p>
