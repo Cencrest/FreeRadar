@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const NYC_FREE_STUFF_URL = "https://newyork.craigslist.org/search/zip";
+const NYC_FREE_STUFF_URL = "https://newyork.craigslist.org/d/free-stuff/search/zip";
 const MAX_RESULTS_TO_IMPORT = 36;
 const IMPORT_COOLDOWN_MINUTES = 15;
 const IMPORT_OWNER_USER_ID = process.env.IMPORT_OWNER_USER_ID || null;
@@ -96,10 +96,11 @@ async function extractSearchResults(searchUrl: string): Promise<SearchResult[]> 
   const results: SearchResult[] = [];
   const seen = new Set<string>();
 
-  $(".cl-search-result").each((_, el) => {
-    const linkEl = $(el).find("a").first();
+  // Current Craigslist markup (2024–2025): li[data-pid] with a.cl-app-anchor
+  $("li[data-pid]").each((_, el) => {
+    const linkEl = $(el).find("a.cl-app-anchor, a").first();
     const href = linkEl.attr("href") || "";
-    const title = linkEl.text().trim();
+    const title = $(el).find(".label, .titlestring, a").first().text().trim();
     const absolute = absoluteUrl(href, searchUrl);
 
     if (!absolute || !title) return;
@@ -112,14 +113,32 @@ async function extractSearchResults(searchUrl: string): Promise<SearchResult[]> 
     );
 
     seen.add(absolute);
-
-    results.push({
-      source_url: absolute,
-      title,
-      original_posted_at: postedAt,
-    });
+    results.push({ source_url: absolute, title, original_posted_at: postedAt });
   });
 
+  // Fallback: newer gallery/list hybrid markup
+  if (results.length === 0) {
+    $(".cl-search-result, .cl-static-search-result").each((_, el) => {
+      const linkEl = $(el).find("a").first();
+      const href = linkEl.attr("href") || "";
+      const title = linkEl.text().trim() || $(el).find(".label").text().trim();
+      const absolute = absoluteUrl(href, searchUrl);
+
+      if (!absolute || !title) return;
+      if (!absolute.includes("craigslist.org")) return;
+      if (!absolute.includes(".html")) return;
+      if (seen.has(absolute)) return;
+
+      const postedAt = normalizePostedAt(
+        $(el).find("time").attr("datetime") || null
+      );
+
+      seen.add(absolute);
+      results.push({ source_url: absolute, title, original_posted_at: postedAt });
+    });
+  }
+
+  // Legacy fallback: old Craigslist markup
   if (results.length === 0) {
     $(".result-row").each((_, el) => {
       const linkEl = $(el).find(".result-title").first();
@@ -137,12 +156,25 @@ async function extractSearchResults(searchUrl: string): Promise<SearchResult[]> 
       );
 
       seen.add(absolute);
+      results.push({ source_url: absolute, title, original_posted_at: postedAt });
+    });
+  }
 
-      results.push({
-        source_url: absolute,
-        title,
-        original_posted_at: postedAt,
-      });
+  // Last resort: grab any craigslist .html links on the page
+  if (results.length === 0) {
+    $("a[href]").each((_, el) => {
+      const href = $(el).attr("href") || "";
+      const title = $(el).text().trim();
+      const absolute = absoluteUrl(href, searchUrl);
+
+      if (!absolute || !title) return;
+      if (!absolute.includes("craigslist.org")) return;
+      if (!absolute.includes(".html")) return;
+      if (seen.has(absolute)) return;
+      if (title.length < 4) return;
+
+      seen.add(absolute);
+      results.push({ source_url: absolute, title, original_posted_at: null });
     });
   }
 
